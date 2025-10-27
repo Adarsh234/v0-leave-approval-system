@@ -1,5 +1,3 @@
-Absolutely 👍 Here’s an enhanced, professional, and beautifully structured **README.md** for your **Leave Approval System** — with better readability, markdown formatting, emoji highlights, section hierarchy, and extra polish for open-source or portfolio presentation.
-
 ---
 
 # 🌐 Leave Approval System
@@ -249,8 +247,6 @@ You’re free to use, modify, and distribute it with attribution.
 ## 💡 Author
 
 Developed with ❤️ by **Adarsh Sharma**
-🔗 [GitHub Repository](https://github.com/Arjung352/GeekGuru.git)
+🔗 [GitHub Repository]((https://github.com/Adarsh234))
 
 ---
-
-Would you like me to include **screenshots section** and a **"Contributing Guidelines"** section (useful if you plan to make it public on GitHub)?
