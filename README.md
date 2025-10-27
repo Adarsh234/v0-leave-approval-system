@@ -1,28 +1,33 @@
-# Leave Approval System
+🌐 Leave Approval System
 
-A comprehensive full-stack platform for managing leave requests, approvals, and records across your organization with department-based access and email notifications.
+A comprehensive full-stack platform for managing leave requests, approvals, and records across your organization — complete with department-based access, email notifications, and dashboard analytics.
 
-## Features
+✨ Key Features
 
-- **Multiple Department Logins**: Role-based access for employees, managers, and coordinators
-- **Leave Request Management**: Employees can submit leave requests with detailed information
-- **Structured Approval Flow**: Managers review and approve/reject requests with comments
-- **Leave Records Tracking**: Maintain leave balance per academic year for each employee
-- **Email Notifications**: Automatic notifications to managers and coordinators
-- **Dashboard Analytics**: View leave statistics and usage patterns
-- **Audit Logging**: Track all actions for compliance and auditing
+🔐 Role-Based Access Control (RBAC): Separate logins for Employees, Managers, Coordinators, and Admins.
 
-## Tech Stack
+📝 Leave Request Management: Employees can submit detailed leave requests with reasons and duration.
 
-- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, Server Actions
-- **Database**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth
-- **Email**: Ready for integration with Resend, SendGrid, or AWS SES
+✅ Structured Approval Flow: Managers can review, approve, or reject requests with comments.
 
-## Project Structure
+📊 Dashboard Analytics: Track leave trends, balances, and approvals across departments.
 
-\`\`\`
+📂 Leave Balance Tracking: Maintain annual leave records for every employee.
+
+📧 Email Notifications: Automatic alerts for new requests, approvals, and rejections.
+
+🕵️ Audit Logging: Track all system actions for compliance and transparency.
+
+📱 Responsive Design: Tailored for desktop and mobile with Tailwind CSS.
+
+🧩 Tech Stack
+Layer	Technology
+Frontend	Next.js 16, React 19, TypeScript, Tailwind CSS
+Backend	Next.js API Routes, Server Actions
+Database	Supabase (PostgreSQL)
+Authentication	Supabase Auth
+Email	Resend / SendGrid / AWS SES (Integration Ready)
+📁 Project Structure
 ├── app/
 │   ├── auth/
 │   │   ├── login/
@@ -42,6 +47,7 @@ A comprehensive full-stack platform for managing leave requests, approvals, and 
 │   ├── page.tsx
 │   ├── layout.tsx
 │   └── globals.css
+│
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts
@@ -49,144 +55,180 @@ A comprehensive full-stack platform for managing leave requests, approvals, and 
 │   │   └── middleware.ts
 │   └── email/
 │       └── send-email.ts
+│
 ├── scripts/
 │   ├── 01-create-tables.sql
 │   └── 02-seed-data.sql
+│
 └── middleware.ts
-\`\`\`
 
-## Database Schema
+🗃️ Database Schema
+Tables
+Table	Description
+departments	Department details (e.g., HR, IT, Finance)
+users	User accounts with role and department mapping
+leave_types	List of available leave types (Casual, Sick, Annual, etc.)
+leave_records	Tracks leave balance per user per academic year
+leave_requests	Stores leave requests and approval statuses
+audit_logs	Logs all critical user actions for compliance
+⚙️ Setup Instructions
+1️⃣ Database Setup
 
-### Tables
+Run SQL scripts in Supabase SQL Editor:
 
-1. **departments**: Store department information
-2. **users**: User accounts with roles and department assignment
-3. **leave_types**: Types of leave (Casual, Sick, Annual, etc.)
-4. **leave_records**: Leave balance per user per academic year
-5. **leave_requests**: Leave request submissions and approvals
-6. **audit_logs**: Audit trail for all actions
+scripts/01-create-tables.sql
+scripts/02-seed-data.sql
 
-## Setup Instructions
+2️⃣ Environment Variables
 
-### 1. Database Setup
+Add these in your Vercel project settings:
 
-Run the SQL scripts in order:
-
-\`\`\`bash
-# Execute in Supabase SQL Editor
-1. scripts/01-create-tables.sql
-2. scripts/02-seed-data.sql
-\`\`\`
-
-### 2. Environment Variables
-
-Add these to your Vercel project environment variables:
-
-\`\`\`
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-\`\`\`
 
-### 3. Create Test Users
+3️⃣ Create Test Users
 
-Use Supabase Auth to create test users:
+Use Supabase Auth to create sample users:
 
-- **Employee**: employee@company.com / password123
-- **Manager**: manager@company.com / password123
-- **Coordinator**: coordinator@company.com / password123
+Role	Email	Password
+Employee	employee@company.com
+	password123
+Manager	manager@company.com
+	password123
+Coordinator	coordinator@company.com
+	password123
 
-Then insert corresponding records in the `users` table with appropriate roles and manager assignments.
+Then, insert corresponding records into the users table with roles and department assignments.
 
-## User Roles
+👥 User Roles & Permissions
+Employee
 
-### Employee
-- Submit leave requests
-- View personal leave balance
-- Track request status
-- View leave history
+Submit leave requests
 
-### Manager
-- Review pending leave requests from team members
-- Approve or reject requests
-- View team leave calendar
-- Add comments to requests
+Track approval status
 
-### Coordinator
-- View all leave requests across organization
-- View comprehensive leave records
-- Generate reports
-- Manage leave types and policies
+View personal leave history
 
-### Admin
-- Full system access
-- User management
-- System configuration
+Check remaining leave balance
 
-## API Endpoints
+Manager
 
-### Leave Requests
-- `POST /api/leave-requests` - Create new leave request
-- `POST /api/leave-requests/[id]/approve` - Approve request
-- `POST /api/leave-requests/[id]/reject` - Reject request
+Review and approve/reject team leave requests
 
-## Email Notifications
+Add approval comments
 
-The system is ready for email integration. To enable:
+View team leave calendar
 
-1. Choose an email service (Resend, SendGrid, AWS SES)
-2. Add API keys to environment variables
-3. Update `lib/email/send-email.ts` with actual implementation
+Coordinator
 
-Notifications are sent for:
-- New leave request (to manager)
-- Request approved (to employee)
-- Request rejected (to employee)
-- Approval completed (to coordinator)
+View all requests organization-wide
 
-## Features Implemented
+Manage leave records and policies
 
-✅ Database schema with all required tables
-✅ Authentication system with Supabase
-✅ Employee dashboard and leave request form
-✅ Manager approval dashboard
-✅ Coordinator dashboard with all requests
-✅ Leave balance tracking per academic year
-✅ Request history and status tracking
-✅ Role-based access control
-✅ Responsive UI with Tailwind CSS
-✅ Email notification framework
+Generate summary reports
 
-## Features Ready for Enhancement
+Admin
 
-- Email service integration (Resend/SendGrid)
-- Advanced filtering and search
-- Leave calendar visualization
-- Bulk leave import
-- Leave policy management
-- Attendance integration
-- Mobile app
-- Advanced reporting and analytics
+Full system access
 
-## Deployment
+Manage users, roles, and configurations
 
-Deploy to Vercel:
+🧠 API Endpoints
+Method	Endpoint	Description
+POST	/api/leave-requests	Create new leave request
+POST	/api/leave-requests/[id]/approve	Approve a leave request
+POST	/api/leave-requests/[id]/reject	Reject a leave request
+📬 Email Notifications
 
-\`\`\`bash
-# Push to GitHub
+The system supports email notification integration.
+To enable, choose your preferred service and configure credentials.
+
+Supported Providers
+
+Resend
+
+SendGrid
+
+AWS SES
+
+Configuration
+
+Add your API key in environment variables and update:
+
+lib/email/send-email.ts
+
+Triggers
+
+New leave request → sent to Manager
+
+Request approved/rejected → sent to Employee
+
+Final approval → sent to Coordinator
+
+✅ Implemented Features
+
+ Complete Database Schema
+
+ Supabase Authentication System
+
+ Employee Dashboard with Request Form
+
+ Manager Approval Dashboard
+
+ Coordinator Dashboard with Global Access
+
+ Leave Balance & Tracking System
+
+ Request History & Status Tracking
+
+ Role-Based Access Control (RBAC)
+
+ Responsive UI (Tailwind CSS)
+
+ Email Notification Framework
+
+🚀 Features Ready for Enhancement
+
+ Email service integration (Resend / SendGrid)
+
+ Advanced filtering & search
+
+ Leave calendar visualization
+
+ Bulk leave import support
+
+ Leave policy customization
+
+ Attendance system integration
+
+ Mobile application (React Native)
+
+ Advanced analytics & reporting
+
+🌍 Deployment Guide
+Deploy with Vercel
+# Push project to GitHub
 git push origin main
 
-# Deploy from Vercel dashboard
-# or use Vercel CLI
+# Deploy via Vercel Dashboard or CLI
 vercel deploy
-\`\`\`
 
-## Support
+🧰 Support & Documentation
 
-For issues or questions, please check:
-1. Supabase documentation: https://supabase.com/docs
-2. Next.js documentation: https://nextjs.org/docs
-3. Tailwind CSS documentation: https://tailwindcss.com/docs
+For further assistance, refer to:
 
-## License
+Supabase Docs
 
-MIT
+Next.js Docs
+
+Tailwind CSS Docs
+
+🪪 License
+
+This project is licensed under the MIT License.
+You’re free to use, modify, and distribute it with attribution.
+
+💡 Author
+
+Developed with ❤️ by Adarsh Sharma
+🔗 GitHub Repository
