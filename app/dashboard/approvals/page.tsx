@@ -29,9 +29,7 @@ export default function ApprovalsPage() {
           },
         })
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch requests")
-        }
+        if (!response.ok) throw new Error("Failed to fetch requests")
 
         const data = await response.json()
         setRequests(data || [])
@@ -51,10 +49,7 @@ export default function ApprovalsPage() {
       const {
         data: { session },
       } = await supabase.auth.getSession()
-
-      if (!session) {
-        throw new Error("Not authenticated")
-      }
+      if (!session) throw new Error("Not authenticated")
 
       const response = await fetch(`/api/leave-requests/${requestId}/approve`, {
         method: "POST",
@@ -64,10 +59,7 @@ export default function ApprovalsPage() {
         },
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to approve request")
-      }
-
+      if (!response.ok) throw new Error("Failed to approve request")
       setRequests(requests.filter((r) => r.id !== requestId))
     } catch (error) {
       console.error("Error approving request:", error)
@@ -82,10 +74,7 @@ export default function ApprovalsPage() {
       const {
         data: { session },
       } = await supabase.auth.getSession()
-
-      if (!session) {
-        throw new Error("Not authenticated")
-      }
+      if (!session) throw new Error("Not authenticated")
 
       const response = await fetch(`/api/leave-requests/${requestId}/reject`, {
         method: "POST",
@@ -95,10 +84,7 @@ export default function ApprovalsPage() {
         },
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to reject request")
-      }
-
+      if (!response.ok) throw new Error("Failed to reject request")
       setRequests(requests.filter((r) => r.id !== requestId))
     } catch (error) {
       console.error("Error rejecting request:", error)
@@ -108,37 +94,51 @@ export default function ApprovalsPage() {
   }
 
   if (loading) {
-    return <div className="text-white">Loading...</div>
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-white animate-pulse text-lg font-medium">Loading pending requests...</p>
+      </div>
+    )
   }
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Pending Approvals</h1>
+    <div className="space-y-6 max-w-5xl mx-auto px-4">
+      {/* Header */}
+      <div className="mb-6 text-center">
+        <h1 className="text-3xl font-bold text-white mb-2 bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
+          Pending Approvals
+        </h1>
         <p className="text-slate-400">Review and approve leave requests from your team</p>
       </div>
 
       {requests.length === 0 ? (
-        <Card className="bg-slate-800 border-slate-700">
-          <CardContent className="pt-6">
-            <p className="text-slate-400 text-center">No pending requests</p>
+        <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700 shadow-md rounded-xl">
+          <CardContent className="pt-8 pb-8 text-center">
+            <p className="text-slate-400 text-base">No pending requests</p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
           {requests.map((request) => (
-            <Card key={request.id} className="bg-slate-800 border-slate-700">
+            <Card
+              key={request.id}
+              className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 shadow-md
+              hover:shadow-yellow-900/50 hover:scale-[1.01] transition-all duration-300 rounded-xl"
+            >
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-white">{request.users?.full_name || "Unknown"}</CardTitle>
+                    <CardTitle className="text-white text-lg font-semibold">
+                      {request.users?.full_name || "Unknown"}
+                    </CardTitle>
                     <p className="text-slate-400 text-sm">{request.users?.email || "N/A"}</p>
                   </div>
-                  <span className="px-3 py-1 bg-yellow-900 text-yellow-200 rounded text-sm">
+                  <span className="px-3 py-1 bg-gradient-to-r from-yellow-700 to-yellow-900 text-yellow-200 rounded-full text-sm font-semibold shadow-inner">
                     {request.leave_types?.name || "Unknown"}
                   </span>
                 </div>
               </CardHeader>
+
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -160,14 +160,14 @@ export default function ApprovalsPage() {
                   <Button
                     onClick={() => handleApprove(request.id)}
                     disabled={processingId === request.id}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    className="flex-1 bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white font-semibold transition-all duration-300"
                   >
                     {processingId === request.id ? "Processing..." : "Approve"}
                   </Button>
                   <Button
                     onClick={() => handleReject(request.id)}
                     disabled={processingId === request.id}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                    className="flex-1 bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white font-semibold transition-all duration-300"
                   >
                     {processingId === request.id ? "Processing..." : "Reject"}
                   </Button>
