@@ -57,7 +57,7 @@ export default function LeaveRecordsPage() {
         <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent mb-2">
           Leave Records
         </h1>
-        <p className="text-slate-400">View leave balance and usage categorized by academic year and role</p>
+        <p className="text-slate-400">View leave balance and usage categorized by working year and role</p>
       </div>
 
       {/* Role Filter */}
@@ -97,7 +97,7 @@ export default function LeaveRecordsPage() {
           .map((year) => (
             <div key={year}>
               <h2 className="text-xl font-semibold text-white mb-2 bg-gradient-to-r from-indigo-400 to-indigo-600 bg-clip-text text-transparent">
-                Academic Year: {year}
+                Working Year: {year}
               </h2>
               <div className="space-y-4">
                 {groupedByYear[year].map((record) => (
