@@ -1,12 +1,22 @@
 "use client"
 
 import type React from "react"
-
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { motion } from "framer-motion"
+import {
+  Home,
+  ClipboardList,
+  CalendarDays,
+  Clock,
+  Users,
+  BarChart2,
+  CheckSquare,
+  LogOut,
+} from "lucide-react"
 
 export default function DashboardLayout({
   children,
@@ -33,7 +43,7 @@ export default function DashboardLayout({
 
         setUser(authUser)
 
-        // Fetch user role from database
+        // Fetch user role
         const { data: userData } = await supabase
           .from("users")
           .select("role, full_name, department_id")
@@ -62,113 +72,97 @@ export default function DashboardLayout({
   if (loading) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-slate-900">
-        <div className="text-white">Loading...</div>
+        <div className="text-white text-lg font-medium animate-pulse">Loading Dashboard...</div>
       </div>
     )
   }
 
+  // Sidebar navigation links grouped by role
+  const navLinks: Record<string, { href: string; label: string; icon: React.ReactNode }[]> = {
+    employee: [
+      { href: "/dashboard/request-leave", label: "Request Leave", icon: <ClipboardList className="w-4 h-4" /> },
+      { href: "/dashboard/my-requests", label: "My Requests", icon: <CalendarDays className="w-4 h-4" /> },
+      { href: "/dashboard/leave-balance", label: "Leave Balance", icon: <BarChart2 className="w-4 h-4" /> },
+    ],
+    manager: [
+      { href: "/dashboard/approvals", label: "Pending Approvals", icon: <CheckSquare className="w-4 h-4" /> },
+      { href: "/dashboard/team-leaves", label: "Team Leaves", icon: <Users className="w-4 h-4" /> },
+    ],
+    coordinator: [
+      { href: "/dashboard/all-requests", label: "All Requests", icon: <ClipboardList className="w-4 h-4" /> },
+      { href: "/dashboard/leave-records", label: "Leave Records", icon: <Clock className="w-4 h-4" /> },
+    ],
+  }
+
   return (
-    <div className="flex min-h-svh bg-slate-900">
+    <div className="flex min-h-svh bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-800 border-r border-slate-700 p-6">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white">Leave System</h1>
-          <p className="text-slate-400 text-sm mt-1">HR Management</p>
+      <motion.aside
+        initial={{ x: -100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 60 }}
+        className="w-64 bg-slate-800/60 backdrop-blur border-r border-slate-700 p-6 flex flex-col justify-between"
+      >
+        <div>
+          {/* Logo Section */}
+          <div className="mb-10">
+            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-500" /> Leave System
+            </h1>
+            <p className="text-slate-400 text-sm mt-1">HR Management Portal</p>
+          </div>
+
+          {/* Navigation */}
+          <nav className="space-y-3">
+            <Link href="/dashboard">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-slate-300 hover:text-white hover:bg-slate-700 transition-all"
+              >
+                <Home className="w-4 h-4" /> Dashboard
+              </Button>
+            </Link>
+
+            {userRole &&
+              navLinks[userRole]?.map((link, i) => (
+                <Link key={i} href={link.href}>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 text-slate-300 hover:text-white hover:bg-slate-700 transition-all"
+                  >
+                    {link.icon}
+                    {link.label}
+                  </Button>
+                </Link>
+              ))}
+          </nav>
         </div>
 
-        <nav className="space-y-4 mb-8">
-          <Link href="/dashboard">
-            <Button variant="ghost" className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700">
-              Dashboard
-            </Button>
-          </Link>
-
-          {userRole === "employee" && (
-            <>
-              <Link href="/dashboard/request-leave">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
-                >
-                  Request Leave
-                </Button>
-              </Link>
-              <Link href="/dashboard/my-requests">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
-                >
-                  My Requests
-                </Button>
-              </Link>
-              <Link href="/dashboard/leave-balance">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
-                >
-                  Leave Balance
-                </Button>
-              </Link>
-            </>
-          )}
-
-          {userRole === "manager" && (
-            <>
-              <Link href="/dashboard/approvals">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
-                >
-                  Pending Approvals
-                </Button>
-              </Link>
-              <Link href="/dashboard/team-leaves">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
-                >
-                  Team Leaves
-                </Button>
-              </Link>
-            </>
-          )}
-
-          {userRole === "coordinator" && (
-            <>
-              <Link href="/dashboard/all-requests">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
-                >
-                  All Requests
-                </Button>
-              </Link>
-              <Link href="/dashboard/leave-records">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-700"
-                >
-                  Leave Records
-                </Button>
-              </Link>
-            </>
-          )}
-        </nav>
-
+        {/* User Info + Logout */}
         <div className="border-t border-slate-700 pt-4">
           <div className="mb-4">
             <p className="text-slate-400 text-sm">Logged in as</p>
-            <p className="text-white font-medium">{user?.email}</p>
+            <p className="text-white font-medium truncate">{user?.email}</p>
             <p className="text-slate-400 text-xs capitalize">{userRole}</p>
           </div>
-          <Button onClick={handleLogout} className="w-full bg-red-600 hover:bg-red-700 text-white">
-            Logout
+          <Button
+            onClick={handleLogout}
+            className="w-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2 transition-all"
+          >
+            <LogOut className="w-4 h-4" /> Logout
           </Button>
         </div>
-      </aside>
+      </motion.aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8">{children}</main>
+      <motion.main
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="flex-1 p-8 overflow-y-auto"
+      >
+        {children}
+      </motion.main>
     </div>
   )
 }
