@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { motion } from "framer-motion"
 import {
   Home,
   ClipboardList,
@@ -43,7 +42,6 @@ export default function DashboardLayout({
 
         setUser(authUser)
 
-        // Fetch user role
         const { data: userData } = await supabase
           .from("users")
           .select("role, full_name, department_id")
@@ -71,8 +69,10 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="flex min-h-svh items-center justify-center bg-slate-900">
-        <div className="text-white text-lg font-medium animate-pulse">Loading Dashboard...</div>
+      <div className="flex min-h-screen items-center justify-center bg-slate-900">
+        <div className="text-white text-lg font-medium animate-pulse">
+          Loading Dashboard...
+        </div>
       </div>
     )
   }
@@ -95,29 +95,28 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-svh bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       {/* Sidebar */}
-      <motion.aside
-        initial={{ x: -100, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 60 }}
-        className="w-64 bg-slate-800/60 backdrop-blur border-r border-slate-700 p-6 flex flex-col justify-between"
+      <aside
+        className="w-64 bg-slate-800/60 backdrop-blur border-r border-slate-700 
+        p-6 flex flex-col justify-between shadow-xl transition-all duration-300"
       >
         <div>
           {/* Logo Section */}
           <div className="mb-10">
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h1 className="text-2xl font-bold flex items-center gap-2 text-white">
               <Clock className="w-5 h-5 text-blue-500" /> Leave System
             </h1>
             <p className="text-slate-400 text-sm mt-1">HR Management Portal</p>
           </div>
 
           {/* Navigation */}
-          <nav className="space-y-3">
+          <nav className="space-y-2">
             <Link href="/dashboard">
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-3 text-slate-300 hover:text-white hover:bg-slate-700 transition-all"
+                className="w-full justify-start gap-3 text-slate-300 
+                hover:text-white hover:bg-slate-700/60 rounded-xl transition duration-200"
               >
                 <Home className="w-4 h-4" /> Dashboard
               </Button>
@@ -128,7 +127,8 @@ export default function DashboardLayout({
                 <Link key={i} href={link.href}>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start gap-3 text-slate-300 hover:text-white hover:bg-slate-700 transition-all"
+                    className="w-full justify-start gap-3 text-slate-300 
+                    hover:text-white hover:bg-slate-700/60 rounded-xl transition duration-200"
                   >
                     {link.icon}
                     {link.label}
@@ -147,22 +147,21 @@ export default function DashboardLayout({
           </div>
           <Button
             onClick={handleLogout}
-            className="w-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2 transition-all"
+            className="w-full bg-red-600 hover:bg-red-700 text-white 
+            flex items-center justify-center gap-2 rounded-xl transition-all duration-200"
           >
             <LogOut className="w-4 h-4" /> Logout
           </Button>
         </div>
-      </motion.aside>
+      </aside>
 
       {/* Main Content */}
-      <motion.main
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="flex-1 p-8 overflow-y-auto"
+      <main
+        className="flex-1 p-8 overflow-y-auto transition-all duration-300 
+        bg-slate-900/40 backdrop-blur-md rounded-l-3xl shadow-inner"
       >
         {children}
-      </motion.main>
+      </main>
     </div>
   )
 }
