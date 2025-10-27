@@ -57,7 +57,7 @@ export default function LeaveBalancePage() {
           Leave Balance
         </h1>
         <p className="text-slate-400 mt-2">
-          Check your leave balance by type and academic year
+          Check your leave balance by type and working year
         </p>
       </div>
 
@@ -71,7 +71,7 @@ export default function LeaveBalancePage() {
         Object.keys(recordsByYear).map((year) => (
           <div key={year} className="mb-6">
             <h2 className="text-xl font-semibold text-white mb-4 border-b border-slate-700 pb-2">
-              Academic Year: {year}
+              Working Year: {year}
             </h2>
             <div className="space-y-5">
               {recordsByYear[year].map((record: any) => {
