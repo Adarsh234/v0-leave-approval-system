@@ -17,6 +17,7 @@ import {
   LogOut,
   Menu,
   X,
+  ChevronRight,
 } from "lucide-react"
 
 export default function DashboardLayout({
@@ -27,7 +28,8 @@ export default function DashboardLayout({
   const [user, setUser] = useState<any>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false) // mobile
+  const [collapsed, setCollapsed] = useState(false) // desktop
   const router = useRouter()
   const supabase = createClient()
 
@@ -72,7 +74,7 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-900">
+      <div className="flex h-screen items-center justify-center bg-slate-900">
         <div className="text-white text-lg font-medium animate-pulse">
           Loading Dashboard...
         </div>
@@ -98,20 +100,32 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      {/* Sidebar (mobile overlay + desktop fixed) */}
+    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+      {/* Sidebar */}
       <aside
-        className={`fixed md:static top-0 left-0 h-full w-64 bg-slate-800/80 backdrop-blur-md border-r border-slate-700
-        p-6 flex flex-col justify-between shadow-xl z-50 transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
+        className={`fixed md:static top-0 left-0 h-full bg-slate-800/80 backdrop-blur-md border-r border-slate-700
+        p-4 flex flex-col justify-between shadow-xl z-50 transform transition-all duration-300 ease-in-out
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        ${collapsed ? "md:w-20" : "md:w-64"}`}
       >
         <div>
-          {/* Logo Section */}
-          <div className="mb-10 flex justify-between items-center">
-            <h1 className="text-2xl font-bold flex items-center gap-2 text-white">
-              <Clock className="w-5 h-5 text-blue-500" /> Leave System
-            </h1>
-            {/* Close button (mobile only) */}
+          {/* Logo + collapse toggle */}
+          <div className="mb-10 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-500" />
+              {!collapsed && <h1 className="text-xl font-bold">Leave System</h1>}
+            </div>
+            {/* Toggle collapse */}
+            <button
+              className="hidden md:flex text-slate-300 hover:text-white transition"
+              onClick={() => setCollapsed(!collapsed)}
+            >
+              <ChevronRight
+                className={`w-5 h-5 transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {/* Mobile close */}
             <button
               className="md:hidden text-slate-300 hover:text-white"
               onClick={() => setSidebarOpen(false)}
@@ -125,10 +139,11 @@ export default function DashboardLayout({
             <Link href="/dashboard" onClick={() => setSidebarOpen(false)}>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-3 text-slate-300 
-                hover:text-white hover:bg-slate-700/60 rounded-xl transition duration-200"
+                className={`w-full justify-start gap-3 text-slate-300 hover:text-white 
+                hover:bg-slate-700/60 rounded-xl transition duration-200 ${collapsed ? "justify-center" : ""}`}
               >
-                <Home className="w-4 h-4" /> Dashboard
+                <Home className="w-4 h-4" />
+                {!collapsed && "Dashboard"}
               </Button>
             </Link>
 
@@ -137,11 +152,11 @@ export default function DashboardLayout({
                 <Link key={i} href={link.href} onClick={() => setSidebarOpen(false)}>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start gap-3 text-slate-300 
-                    hover:text-white hover:bg-slate-700/60 rounded-xl transition duration-200"
+                    className={`w-full justify-start gap-3 text-slate-300 hover:text-white 
+                    hover:bg-slate-700/60 rounded-xl transition duration-200 ${collapsed ? "justify-center" : ""}`}
                   >
                     {link.icon}
-                    {link.label}
+                    {!collapsed && link.label}
                   </Button>
                 </Link>
               ))}
@@ -150,17 +165,20 @@ export default function DashboardLayout({
 
         {/* User Info + Logout */}
         <div className="border-t border-slate-700 pt-4">
-          <div className="mb-4">
-            <p className="text-slate-400 text-sm">Logged in as</p>
-            <p className="text-white font-medium truncate">{user?.email}</p>
-            <p className="text-slate-400 text-xs capitalize">{userRole}</p>
-          </div>
+          {!collapsed && (
+            <div className="mb-4">
+              <p className="text-slate-400 text-sm">Logged in as</p>
+              <p className="text-white font-medium truncate">{user?.email}</p>
+              <p className="text-slate-400 text-xs capitalize">{userRole}</p>
+            </div>
+          )}
           <Button
             onClick={handleLogout}
-            className="w-full bg-red-600 hover:bg-red-700 text-white 
-            flex items-center justify-center gap-2 rounded-xl transition-all duration-200"
+            className={`w-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2 
+            rounded-xl transition-all duration-200 ${collapsed ? "px-2" : ""}`}
           >
-            <LogOut className="w-4 h-4" /> Logout
+            <LogOut className="w-4 h-4" />
+            {!collapsed && "Logout"}
           </Button>
         </div>
       </aside>
@@ -174,10 +192,7 @@ export default function DashboardLayout({
       )}
 
       {/* Main Content */}
-      <main
-        className="flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 
-        bg-slate-900/40 backdrop-blur-md rounded-none md:rounded-l-3xl shadow-inner relative"
-      >
+      <main className="flex-1 h-full overflow-y-auto p-4 md:p-8 transition-all duration-300 bg-slate-900/40 backdrop-blur-md shadow-inner relative">
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between mb-4">
           <button
