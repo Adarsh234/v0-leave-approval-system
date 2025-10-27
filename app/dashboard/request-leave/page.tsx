@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -33,7 +32,6 @@ export default function RequestLeavePage() {
         console.error("Error fetching leave types:", err)
       }
     }
-
     fetchLeaveTypes()
   }, [supabase])
 
@@ -45,9 +43,7 @@ export default function RequestLeavePage() {
     try {
       const response = await fetch("/api/leave-requests", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           leaveTypeId: formData.leaveType,
           startDate: formData.startDate,
@@ -62,9 +58,7 @@ export default function RequestLeavePage() {
       }
 
       setSuccess(true)
-      setTimeout(() => {
-        router.push("/dashboard/my-requests")
-      }, 2000)
+      setTimeout(() => router.push("/dashboard/my-requests"), 2000)
     } catch (err: any) {
       setError(err.message || "Failed to submit request")
     } finally {
@@ -73,28 +67,42 @@ export default function RequestLeavePage() {
   }
 
   return (
-    <div className="max-w-2xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Request Leave</h1>
-        <p className="text-slate-400">Submit a new leave request to your manager</p>
+    <div className="max-w-2xl mx-auto px-4">
+      {/* Page Header */}
+      <div className="mb-8 text-center">
+        <h1 className="text-4xl font-extrabold text-white mb-2 tracking-tight">
+          Request Leave
+        </h1>
+        <p className="text-slate-400 text-sm">
+          Fill out the form below to submit a new leave request
+        </p>
       </div>
 
-      <Card className="bg-slate-800 border-slate-700">
+      {/* Leave Request Form Card */}
+      <Card className="bg-slate-800/70 border border-slate-700 shadow-2xl backdrop-blur-lg transition-all duration-300 hover:shadow-blue-900/20">
         <CardHeader>
-          <CardTitle className="text-white">Leave Request Form</CardTitle>
+          <CardTitle className="text-xl text-white font-semibold flex items-center gap-2">
+            📝 Leave Request Form
+          </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Alert Messages */}
           {success && (
-            <div className="mb-4 p-4 bg-green-900 border border-green-700 rounded text-green-200">
-              Leave request submitted successfully! Redirecting...
+            <div className="mb-4 p-4 bg-green-900/70 border border-green-700 rounded-lg text-green-200 text-sm animate-pulse">
+              ✅ Leave request submitted successfully! Redirecting...
+            </div>
+          )}
+          {error && (
+            <div className="mb-4 p-4 bg-red-900/70 border border-red-700 rounded-lg text-red-200 text-sm">
+              ⚠️ {error}
             </div>
           )}
 
-          {error && <div className="mb-4 p-4 bg-red-900 border border-red-700 rounded text-red-200">{error}</div>}
-
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Leave Type */}
             <div className="grid gap-2">
-              <Label htmlFor="leaveType" className="text-slate-200">
+              <Label htmlFor="leaveType" className="text-slate-200 font-medium">
                 Leave Type
               </Label>
               <select
@@ -102,7 +110,7 @@ export default function RequestLeavePage() {
                 value={formData.leaveType}
                 onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
                 required
-                className="bg-slate-700 border border-slate-600 text-white rounded px-3 py-2"
+                className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
               >
                 <option value="">Select leave type</option>
                 {leaveTypes.map((type) => (
@@ -113,9 +121,10 @@ export default function RequestLeavePage() {
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Dates */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="startDate" className="text-slate-200">
+                <Label htmlFor="startDate" className="text-slate-200 font-medium">
                   Start Date
                 </Label>
                 <Input
@@ -124,11 +133,11 @@ export default function RequestLeavePage() {
                   value={formData.startDate}
                   onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                   required
-                  className="bg-slate-700 border-slate-600 text-white"
+                  className="bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="endDate" className="text-slate-200">
+                <Label htmlFor="endDate" className="text-slate-200 font-medium">
                   End Date
                 </Label>
                 <Input
@@ -137,13 +146,14 @@ export default function RequestLeavePage() {
                   value={formData.endDate}
                   onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                   required
-                  className="bg-slate-700 border-slate-600 text-white"
+                  className="bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
                 />
               </div>
             </div>
 
+            {/* Reason */}
             <div className="grid gap-2">
-              <Label htmlFor="reason" className="text-slate-200">
+              <Label htmlFor="reason" className="text-slate-200 font-medium">
                 Reason
               </Label>
               <textarea
@@ -152,12 +162,21 @@ export default function RequestLeavePage() {
                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                 required
                 rows={4}
-                className="bg-slate-700 border border-slate-600 text-white rounded px-3 py-2"
-                placeholder="Provide a reason for your leave request"
+                className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
+                placeholder="Provide a reason for your leave request..."
               />
             </div>
 
-            <Button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={loading}
+              className={`w-full text-white font-semibold py-2 rounded-lg transition-all duration-200 ${
+                loading
+                  ? "bg-blue-800 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-blue-900/30"
+              }`}
+            >
               {loading ? "Submitting..." : "Submit Request"}
             </Button>
           </form>
