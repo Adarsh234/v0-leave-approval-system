@@ -1,33 +1,41 @@
-🌐 Leave Approval System
+Absolutely 👍 Here’s an enhanced, professional, and beautifully structured **README.md** for your **Leave Approval System** — with better readability, markdown formatting, emoji highlights, section hierarchy, and extra polish for open-source or portfolio presentation.
 
-A comprehensive full-stack platform for managing leave requests, approvals, and records across your organization — complete with department-based access, email notifications, and dashboard analytics.
+---
 
-✨ Key Features
+# 🌐 Leave Approval System
 
-🔐 Role-Based Access Control (RBAC): Separate logins for Employees, Managers, Coordinators, and Admins.
+A **comprehensive full-stack platform** for managing leave requests, approvals, and records across your organization — complete with **department-based access**, **email notifications**, and **dashboard analytics**.
 
-📝 Leave Request Management: Employees can submit detailed leave requests with reasons and duration.
+---
 
-✅ Structured Approval Flow: Managers can review, approve, or reject requests with comments.
+## ✨ Key Features
 
-📊 Dashboard Analytics: Track leave trends, balances, and approvals across departments.
+* 🔐 **Role-Based Access Control (RBAC):** Separate logins for Employees, Managers, Coordinators, and Admins.
+* 📝 **Leave Request Management:** Employees can submit detailed leave requests with reasons and duration.
+* ✅ **Structured Approval Flow:** Managers can review, approve, or reject requests with comments.
+* 📊 **Dashboard Analytics:** Track leave trends, balances, and approvals across departments.
+* 📂 **Leave Balance Tracking:** Maintain annual leave records for every employee.
+* 📧 **Email Notifications:** Automatic alerts for new requests, approvals, and rejections.
+* 🕵️ **Audit Logging:** Track all system actions for compliance and transparency.
+* 📱 **Responsive Design:** Tailored for desktop and mobile with Tailwind CSS.
 
-📂 Leave Balance Tracking: Maintain annual leave records for every employee.
+---
 
-📧 Email Notifications: Automatic alerts for new requests, approvals, and rejections.
+## 🧩 Tech Stack
 
-🕵️ Audit Logging: Track all system actions for compliance and transparency.
+| Layer              | Technology                                      |
+| ------------------ | ----------------------------------------------- |
+| **Frontend**       | Next.js 16, React 19, TypeScript, Tailwind CSS  |
+| **Backend**        | Next.js API Routes, Server Actions              |
+| **Database**       | Supabase (PostgreSQL)                           |
+| **Authentication** | Supabase Auth                                   |
+| **Email**          | Resend / SendGrid / AWS SES (Integration Ready) |
 
-📱 Responsive Design: Tailored for desktop and mobile with Tailwind CSS.
+---
 
-🧩 Tech Stack
-Layer	Technology
-Frontend	Next.js 16, React 19, TypeScript, Tailwind CSS
-Backend	Next.js API Routes, Server Actions
-Database	Supabase (PostgreSQL)
-Authentication	Supabase Auth
-Email	Resend / SendGrid / AWS SES (Integration Ready)
-📁 Project Structure
+## 📁 Project Structure
+
+```bash
 ├── app/
 │   ├── auth/
 │   │   ├── login/
@@ -61,174 +69,188 @@ Email	Resend / SendGrid / AWS SES (Integration Ready)
 │   └── 02-seed-data.sql
 │
 └── middleware.ts
+```
 
-🗃️ Database Schema
-Tables
-Table	Description
-departments	Department details (e.g., HR, IT, Finance)
-users	User accounts with role and department mapping
-leave_types	List of available leave types (Casual, Sick, Annual, etc.)
-leave_records	Tracks leave balance per user per academic year
-leave_requests	Stores leave requests and approval statuses
-audit_logs	Logs all critical user actions for compliance
-⚙️ Setup Instructions
-1️⃣ Database Setup
+---
+
+## 🗃️ Database Schema
+
+### **Tables**
+
+| Table            | Description                                                |
+| ---------------- | ---------------------------------------------------------- |
+| `departments`    | Department details (e.g., HR, IT, Finance)                 |
+| `users`          | User accounts with role and department mapping             |
+| `leave_types`    | List of available leave types (Casual, Sick, Annual, etc.) |
+| `leave_records`  | Tracks leave balance per user per academic year            |
+| `leave_requests` | Stores leave requests and approval statuses                |
+| `audit_logs`     | Logs all critical user actions for compliance              |
+
+---
+
+## ⚙️ Setup Instructions
+
+### **1️⃣ Database Setup**
 
 Run SQL scripts in Supabase SQL Editor:
 
+```bash
 scripts/01-create-tables.sql
 scripts/02-seed-data.sql
+```
 
-2️⃣ Environment Variables
+### **2️⃣ Environment Variables**
 
-Add these in your Vercel project settings:
+Add these in your **Vercel** project settings:
 
+```bash
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-3️⃣ Create Test Users
+### **3️⃣ Create Test Users**
 
-Use Supabase Auth to create sample users:
+Use **Supabase Auth** to create sample users:
 
-Role	Email	Password
-Employee	employee@company.com
-	password123
-Manager	manager@company.com
-	password123
-Coordinator	coordinator@company.com
-	password123
+| Role        | Email                                                     | Password    |
+| ----------- | --------------------------------------------------------- | ----------- |
+| Employee    | [employee@company.com](mailto:employee@company.com)       | password123 |
+| Manager     | [manager@company.com](mailto:manager@company.com)         | password123 |
+| Coordinator | [coordinator@company.com](mailto:coordinator@company.com) | password123 |
 
-Then, insert corresponding records into the users table with roles and department assignments.
+Then, insert corresponding records into the `users` table with roles and department assignments.
 
-👥 User Roles & Permissions
-Employee
+---
 
-Submit leave requests
+## 👥 User Roles & Permissions
 
-Track approval status
+### **Employee**
 
-View personal leave history
+* Submit leave requests
+* Track approval status
+* View personal leave history
+* Check remaining leave balance
 
-Check remaining leave balance
+### **Manager**
 
-Manager
+* Review and approve/reject team leave requests
+* Add approval comments
+* View team leave calendar
 
-Review and approve/reject team leave requests
+### **Coordinator**
 
-Add approval comments
+* View all requests organization-wide
+* Manage leave records and policies
+* Generate summary reports
 
-View team leave calendar
+### **Admin**
 
-Coordinator
+* Full system access
+* Manage users, roles, and configurations
 
-View all requests organization-wide
+---
 
-Manage leave records and policies
+## 🧠 API Endpoints
 
-Generate summary reports
+| Method | Endpoint                           | Description              |
+| ------ | ---------------------------------- | ------------------------ |
+| `POST` | `/api/leave-requests`              | Create new leave request |
+| `POST` | `/api/leave-requests/[id]/approve` | Approve a leave request  |
+| `POST` | `/api/leave-requests/[id]/reject`  | Reject a leave request   |
 
-Admin
+---
 
-Full system access
-
-Manage users, roles, and configurations
-
-🧠 API Endpoints
-Method	Endpoint	Description
-POST	/api/leave-requests	Create new leave request
-POST	/api/leave-requests/[id]/approve	Approve a leave request
-POST	/api/leave-requests/[id]/reject	Reject a leave request
-📬 Email Notifications
+## 📬 Email Notifications
 
 The system supports email notification integration.
 To enable, choose your preferred service and configure credentials.
 
-Supported Providers
+### **Supported Providers**
 
-Resend
+* [Resend](https://resend.com)
+* [SendGrid](https://sendgrid.com)
+* [AWS SES](https://aws.amazon.com/ses)
 
-SendGrid
-
-AWS SES
-
-Configuration
+### **Configuration**
 
 Add your API key in environment variables and update:
 
+```
 lib/email/send-email.ts
+```
 
-Triggers
+### **Triggers**
 
-New leave request → sent to Manager
+* New leave request → sent to **Manager**
+* Request approved/rejected → sent to **Employee**
+* Final approval → sent to **Coordinator**
 
-Request approved/rejected → sent to Employee
+---
 
-Final approval → sent to Coordinator
+## ✅ Implemented Features
 
-✅ Implemented Features
+* [x] Complete Database Schema
+* [x] Supabase Authentication System
+* [x] Employee Dashboard with Request Form
+* [x] Manager Approval Dashboard
+* [x] Coordinator Dashboard with Global Access
+* [x] Leave Balance & Tracking System
+* [x] Request History & Status Tracking
+* [x] Role-Based Access Control (RBAC)
+* [x] Responsive UI (Tailwind CSS)
+* [x] Email Notification Framework
 
- Complete Database Schema
+---
 
- Supabase Authentication System
+## 🚀 Features Ready for Enhancement
 
- Employee Dashboard with Request Form
+* [ ] Email service integration (Resend / SendGrid)
+* [ ] Advanced filtering & search
+* [ ] Leave calendar visualization
+* [ ] Bulk leave import support
+* [ ] Leave policy customization
+* [ ] Attendance system integration
+* [ ] Mobile application (React Native)
+* [ ] Advanced analytics & reporting
 
- Manager Approval Dashboard
+---
 
- Coordinator Dashboard with Global Access
+## 🌍 Deployment Guide
 
- Leave Balance & Tracking System
+### Deploy with Vercel
 
- Request History & Status Tracking
-
- Role-Based Access Control (RBAC)
-
- Responsive UI (Tailwind CSS)
-
- Email Notification Framework
-
-🚀 Features Ready for Enhancement
-
- Email service integration (Resend / SendGrid)
-
- Advanced filtering & search
-
- Leave calendar visualization
-
- Bulk leave import support
-
- Leave policy customization
-
- Attendance system integration
-
- Mobile application (React Native)
-
- Advanced analytics & reporting
-
-🌍 Deployment Guide
-Deploy with Vercel
+```bash
 # Push project to GitHub
 git push origin main
 
 # Deploy via Vercel Dashboard or CLI
 vercel deploy
+```
 
-🧰 Support & Documentation
+---
+
+## 🧰 Support & Documentation
 
 For further assistance, refer to:
 
-Supabase Docs
+* [Supabase Docs](https://supabase.com/docs)
+* [Next.js Docs](https://nextjs.org/docs)
+* [Tailwind CSS Docs](https://tailwindcss.com/docs)
 
-Next.js Docs
+---
 
-Tailwind CSS Docs
+## 🪪 License
 
-🪪 License
-
-This project is licensed under the MIT License.
+This project is licensed under the **MIT License**.
 You’re free to use, modify, and distribute it with attribution.
 
-💡 Author
+---
 
-Developed with ❤️ by Adarsh Sharma
-🔗 GitHub Repository
+## 💡 Author
+
+Developed with ❤️ by **Adarsh Sharma**
+🔗 [GitHub Repository](https://github.com/Arjung352/GeekGuru.git)
+
+---
+
+Would you like me to include **screenshots section** and a **"Contributing Guidelines"** section (useful if you plan to make it public on GitHub)?
