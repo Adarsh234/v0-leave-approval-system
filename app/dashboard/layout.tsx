@@ -201,7 +201,6 @@ export default function DashboardLayout({
           >
             <Menu className="w-6 h-6" />
           </button>
-          <h1 className="text-lg font-semibold">Dashboard</h1>
         </div>
 
         {children}
