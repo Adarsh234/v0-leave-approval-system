@@ -32,43 +32,23 @@ export default function Home() {
 
         {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20">
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-            <div className="text-3xl mb-4">📋</div>
-            <h3 className="text-xl font-bold text-white mb-2">Leave Requests</h3>
-            <p className="text-slate-400">
-              Employees can easily submit leave requests with detailed information and reasons.
-            </p>
-          </div>
-
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-            <div className="text-3xl mb-4">✅</div>
-            <h3 className="text-xl font-bold text-white mb-2">Approval Workflow</h3>
-            <p className="text-slate-400">Managers review and approve/reject requests with a structured workflow.</p>
-          </div>
-
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-            <div className="text-3xl mb-4">📊</div>
-            <h3 className="text-xl font-bold text-white mb-2">Leave Records</h3>
-            <p className="text-slate-400">Track leave balance and usage per academic year for all employees.</p>
-          </div>
-
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-            <div className="text-3xl mb-4">👥</div>
-            <h3 className="text-xl font-bold text-white mb-2">Department Access</h3>
-            <p className="text-slate-400">Multiple logins with role-based access for different departments.</p>
-          </div>
-
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-            <div className="text-3xl mb-4">📧</div>
-            <h3 className="text-xl font-bold text-white mb-2">Email Notifications</h3>
-            <p className="text-slate-400">Automatic notifications to managers and coordinators for all actions.</p>
-          </div>
-
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-            <div className="text-3xl mb-4">📈</div>
-            <h3 className="text-xl font-bold text-white mb-2">Analytics</h3>
-            <p className="text-slate-400">View comprehensive leave statistics and usage patterns.</p>
-          </div>
+          {[
+            { icon: "📋", title: "Leave Requests", text: "Employees can easily submit leave requests with detailed information and reasons." },
+            { icon: "✅", title: "Approval Workflow", text: "Managers review and approve/reject requests with a structured workflow." },
+            { icon: "📊", title: "Leave Records", text: "Track leave balance and usage per academic year for all employees." },
+            { icon: "👥", title: "Department Access", text: "Multiple logins with role-based access for different departments." },
+            { icon: "📧", title: "Email Notifications", text: "Automatic notifications to managers and coordinators for all actions." },
+            { icon: "📈", title: "Analytics", text: "View comprehensive leave statistics and usage patterns." },
+          ].map((feature, i) => (
+            <div
+              key={i}
+              className="bg-slate-800 border border-slate-700 rounded-xl p-6 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-2 hover:border-blue-600"
+            >
+              <div className="text-3xl mb-4">{feature.icon}</div>
+              <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
+              <p className="text-slate-400">{feature.text}</p>
+            </div>
+          ))}
         </div>
 
         {/* Demo Credentials */}
