@@ -15,6 +15,8 @@ import {
   BarChart2,
   CheckSquare,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react"
 
 export default function DashboardLayout({
@@ -25,6 +27,7 @@ export default function DashboardLayout({
   const [user, setUser] = useState<any>(null)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -96,23 +99,30 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      {/* Sidebar */}
+      {/* Sidebar (mobile overlay + desktop fixed) */}
       <aside
-        className="w-64 bg-slate-800/60 backdrop-blur border-r border-slate-700 
-        p-6 flex flex-col justify-between shadow-xl transition-all duration-300"
+        className={`fixed md:static top-0 left-0 h-full w-64 bg-slate-800/80 backdrop-blur-md border-r border-slate-700
+        p-6 flex flex-col justify-between shadow-xl z-50 transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
       >
         <div>
           {/* Logo Section */}
-          <div className="mb-10">
+          <div className="mb-10 flex justify-between items-center">
             <h1 className="text-2xl font-bold flex items-center gap-2 text-white">
               <Clock className="w-5 h-5 text-blue-500" /> Leave System
             </h1>
-            <p className="text-slate-400 text-sm mt-1">HR Management Portal</p>
+            {/* Close button (mobile only) */}
+            <button
+              className="md:hidden text-slate-300 hover:text-white"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Navigation */}
           <nav className="space-y-2">
-            <Link href="/dashboard">
+            <Link href="/dashboard" onClick={() => setSidebarOpen(false)}>
               <Button
                 variant="ghost"
                 className="w-full justify-start gap-3 text-slate-300 
@@ -124,7 +134,7 @@ export default function DashboardLayout({
 
             {userRole &&
               navLinks[userRole]?.map((link, i) => (
-                <Link key={i} href={link.href}>
+                <Link key={i} href={link.href} onClick={() => setSidebarOpen(false)}>
                   <Button
                     variant="ghost"
                     className="w-full justify-start gap-3 text-slate-300 
@@ -155,11 +165,30 @@ export default function DashboardLayout({
         </div>
       </aside>
 
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
       {/* Main Content */}
       <main
-        className="flex-1 p-8 overflow-y-auto transition-all duration-300 
-        bg-slate-900/40 backdrop-blur-md rounded-l-3xl shadow-inner"
+        className="flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 
+        bg-slate-900/40 backdrop-blur-md rounded-none md:rounded-l-3xl shadow-inner relative"
       >
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between mb-4">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="text-white hover:text-blue-400 transition"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <h1 className="text-lg font-semibold">Dashboard</h1>
+        </div>
+
         {children}
       </main>
     </div>
