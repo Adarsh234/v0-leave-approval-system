@@ -20,7 +20,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-6 py-24 text-center space-y-6">
-        <h2 className="text-5xl font-bold bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent animate-text-gradient">
+        <h2 className="text-5xl font-bold bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent animate-text-gradient p-4">
           Streamline Your Leave Management
         </h2>
         <p className="text-xl text-slate-400 max-w-2xl mx-auto">
