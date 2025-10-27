@@ -64,7 +64,7 @@ export default function DashboardPage() {
         {/* Leave Balance */}
         <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 shadow-md hover:shadow-blue-900/40 hover:scale-[1.02] transition-all duration-300 rounded-xl">
           <CardHeader>
-            <CardTitle className="text-slate-200 font-semibold">Leave Balance</CardTitle>
+            <CardTitle className="text-slate-200 font-semibold text-2xl items-center">Leave Balance</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center">
             <div className="text-4xl font-bold text-blue-400">
@@ -80,7 +80,7 @@ export default function DashboardPage() {
         {/* Pending Requests */}
         <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 shadow-md hover:shadow-yellow-900/40 hover:scale-[1.02] transition-all duration-300 rounded-xl">
           <CardHeader>
-            <CardTitle className="text-slate-200 font-semibold">Pending Requests</CardTitle>
+            <CardTitle className="text-slate-200 font-semibold text-2xl items-center">Pending Requests</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center">
             <div className="text-4xl font-bold text-yellow-400">
@@ -93,7 +93,7 @@ export default function DashboardPage() {
         {/* Role */}
         <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 shadow-md hover:shadow-green-900/40 hover:scale-[1.02] transition-all duration-300 rounded-xl">
           <CardHeader>
-            <CardTitle className="text-slate-200 font-semibold">Role</CardTitle>
+            <CardTitle className="text-slate-200 font-semibold text-2xl items-center">Role</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center">
             <div className="text-3xl font-bold text-green-400 capitalize">{stats?.role}</div>
