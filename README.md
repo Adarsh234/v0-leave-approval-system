@@ -247,6 +247,6 @@ You’re free to use, modify, and distribute it with attribution.
 ## 💡 Author
 
 Developed with ❤️ by **Adarsh Sharma**
-🔗 [GitHub Repository]((https://github.com/Adarsh234))
+🔗 [GitHub Repository]([https://github.com/Adarsh234])
 
 ---
