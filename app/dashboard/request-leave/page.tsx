@@ -23,6 +23,7 @@ export default function RequestLeavePage() {
   const supabase = createClient()
   const router = useRouter()
 
+  // Fetch leave types
   useEffect(() => {
     const fetchLeaveTypes = async () => {
       try {
@@ -35,46 +36,43 @@ export default function RequestLeavePage() {
     fetchLeaveTypes()
   }, [supabase])
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setLoading(true)
-  setError(null)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
 
-  try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
+    try {
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error("You must be signed in to submit a leave request")
 
-    if (!session) throw new Error("You must be logged in to request leave")
+      const response = await fetch("/api/leave-requests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`, // ✅ pass token
+        },
+        body: JSON.stringify({
+          leaveTypeId: formData.leaveType,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          reason: formData.reason,
+        }),
+      })
 
-    const response = await fetch("/api/leave-requests", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`, // <--- add this
-      },
-      body: JSON.stringify({
-        leaveTypeId: formData.leaveType,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        reason: formData.reason,
-      }),
-    })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to submit request")
+      }
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || "Failed to submit request")
+      setSuccess(true)
+      setTimeout(() => router.push("/dashboard/my-requests"), 2000)
+    } catch (err: any) {
+      setError(err.message || "Failed to submit request")
+    } finally {
+      setLoading(false)
     }
-
-    setSuccess(true)
-    setTimeout(() => router.push("/dashboard/my-requests"), 2000)
-  } catch (err: any) {
-    setError(err.message || "Failed to submit request")
-  } finally {
-    setLoading(false)
   }
-}
-
 
   return (
     <div className="max-w-2xl mx-auto px-4">
@@ -88,7 +86,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         </p>
       </div>
 
-      {/* Leave Request Form Card */}
+      {/* Leave Request Form */}
       <Card className="bg-slate-800/70 border border-slate-700 shadow-2xl backdrop-blur-lg transition-all duration-300 hover:shadow-blue-900/20">
         <CardHeader>
           <CardTitle className="text-xl text-white font-semibold flex items-center gap-2">
@@ -96,7 +94,6 @@ const handleSubmit = async (e: React.FormEvent) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Alert Messages */}
           {success && (
             <div className="mb-4 p-4 bg-green-900/70 border border-green-700 rounded-lg text-green-200 text-sm animate-pulse">
               ✅ Leave request submitted successfully! Redirecting...
@@ -108,7 +105,6 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Leave Type */}
             <div className="grid gap-2">
@@ -177,7 +173,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               />
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <Button
               type="submit"
               disabled={loading}
