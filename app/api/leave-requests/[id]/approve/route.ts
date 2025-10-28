@@ -1,55 +1,62 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getSupabaseUrl, getSupabaseHeaders } from "@/lib/supabase/server"
+import { type NextRequest, NextResponse } from "next/server"
+import { getSupabaseHeaders, getSupabaseUrl } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const supabaseUrl = getSupabaseUrl()
     const headers = getSupabaseHeaders()
-    const { id } = params
 
-    if (!id) {
-      return NextResponse.json({ error: "Missing request ID" }, { status: 400 })
-    }
-
+    // ✅ Get Authorization token from header (not cookie)
     const authHeader = request.headers.get("authorization")
     if (!authHeader) {
+      console.log("[DEBUG] Missing auth header")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const authToken = authHeader.replace("Bearer ", "")
     headers.Authorization = `Bearer ${authToken}`
 
-    // Parse body
-    const body = await request.json().catch(() => null)
-    if (!body || !body.action) {
-      return NextResponse.json({ error: "Missing action field" }, { status: 400 })
+    // ✅ Verify Supabase user
+    const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, { headers })
+    if (!userResponse.ok) {
+      console.log("[DEBUG] Invalid Supabase token")
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { action } = body
-    const newStatus = action === "approve" ? "approved" : "rejected"
+    const userData = await userResponse.json()
+    const managerId = userData.id
 
-    console.log(`[v0] Updating request ${id} to status: ${newStatus}`)
+    // ✅ Log everything for debugging
+    const { id } = params
+    console.log(`[DEBUG] Manager ${managerId} approving leave request ${id}`)
 
-    // Update Supabase record
+    // ✅ Update leave request status
+    const updateBody = {
+      status: "approved",
+      manager_reviewed_at: new Date().toISOString(),
+    }
+
     const updateResponse = await fetch(`${supabaseUrl}/rest/v1/leave_requests?id=eq.${id}`, {
       method: "PATCH",
       headers: {
         ...headers,
         "Content-Type": "application/json",
+        Prefer: "return=minimal", // Prevent extra response payload
       },
-      body: JSON.stringify({ status: newStatus }),
+      body: JSON.stringify(updateBody),
     })
 
+    // ✅ If Supabase rejects it, show the detailed error
     if (!updateResponse.ok) {
-      const errText = await updateResponse.text()
-      console.error("[v0] Supabase update failed:", errText)
-      return NextResponse.json({ error: "Failed to update leave request" }, { status: updateResponse.status })
+      const errorText = await updateResponse.text()
+      console.error("[DEBUG] Supabase update error:", errorText)
+      return NextResponse.json({ error: "Failed to update leave request", details: errorText }, { status: 400 })
     }
 
-    console.log(`[v0] Leave request ${id} successfully updated to ${newStatus}`)
-    return NextResponse.json({ message: `Leave request ${newStatus}` })
+    console.log("[DEBUG] Leave request approved successfully.")
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[v0] Error approving/rejecting request:", error)
+    console.error("[v0] Error approving leave request:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
