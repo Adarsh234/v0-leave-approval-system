@@ -1,45 +1,30 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/client";
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    // Create Supabase client with request cookies
-    const supabase = createClient(req);
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Get authenticated user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const managerId = session.user.id;
+    const requestId = params.id;
 
-    const userId = user.id;
-    const { leaveTypeId, startDate, endDate, reason } = await req.json();
-
-    // Get manager ID
-    const { data: userDetails } = await supabase
-      .from("users")
-      .select("manager_id")
-      .eq("id", userId)
-      .single();
-
-    if (!userDetails) return NextResponse.json({ error: "User not found" }, { status: 404 });
-
-    // Insert leave request
+    // Update status to approved
     const { data, error } = await supabase
       .from("leave_requests")
-      .insert({
-        user_id: userId,
-        leave_type_id: leaveTypeId,
-        start_date: startDate,
-        end_date: endDate,
-        reason,
-        manager_id: userDetails.manager_id,
-        status: "pending",
+      .update({
+        status: "approved",
+        manager_reviewed_at: new Date().toISOString(),
       })
+      .eq("id", requestId)
+      .eq("manager_id", managerId)
       .select()
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
-    return NextResponse.json(data, { status: 201 });
+    return NextResponse.json(data, { status: 200 });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
