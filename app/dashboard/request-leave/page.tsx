@@ -35,36 +35,46 @@ export default function RequestLeavePage() {
     fetchLeaveTypes()
   }, [supabase])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setLoading(true)
+  setError(null)
 
-    try {
-      const response = await fetch("/api/leave-requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          leaveTypeId: formData.leaveType,
-          startDate: formData.startDate,
-          endDate: formData.endDate,
-          reason: formData.reason,
-        }),
-      })
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Failed to submit request")
-      }
+    if (!session) throw new Error("You must be logged in to request leave")
 
-      setSuccess(true)
-      setTimeout(() => router.push("/dashboard/my-requests"), 2000)
-    } catch (err: any) {
-      setError(err.message || "Failed to submit request")
-    } finally {
-      setLoading(false)
+    const response = await fetch("/api/leave-requests", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`, // <--- add this
+      },
+      body: JSON.stringify({
+        leaveTypeId: formData.leaveType,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        reason: formData.reason,
+      }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || "Failed to submit request")
     }
+
+    setSuccess(true)
+    setTimeout(() => router.push("/dashboard/my-requests"), 2000)
+  } catch (err: any) {
+    setError(err.message || "Failed to submit request")
+  } finally {
+    setLoading(false)
   }
+}
+
 
   return (
     <div className="max-w-2xl mx-auto px-4">
