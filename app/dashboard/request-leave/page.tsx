@@ -52,6 +52,7 @@ export default function RequestLeavePage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`, // ✅ pass token
         },
+        credentials: "include", // ✅ important
         body: JSON.stringify({
           leaveTypeId: formData.leaveType,
           startDate: formData.startDate,
