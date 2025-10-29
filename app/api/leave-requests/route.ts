@@ -1,32 +1,42 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/client";
+import { NextRequest, NextResponse } from "next/server"
+import { createServerClient } from "@/lib/supabase/server"  // use server client
+import { cookies } from "next/headers"
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest) {
+  const cookieStore = cookies()
+  const supabase = createServerClient(cookieStore)
+
+  const {
+    data: { user },
+    error: authError
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   try {
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { leaveTypeId, startDate, endDate, reason } = await request.json()
 
-    const managerId = session.user.id;
-    const requestId = params.id;
-
-    // Update status to approved
     const { data, error } = await supabase
       .from("leave_requests")
-      .update({
-        status: "approved",
-        manager_reviewed_at: new Date().toISOString(),
-      })
-      .eq("id", requestId)
-      .eq("manager_id", managerId)
+      .insert([
+        {
+          employee_id: user.id,
+          leave_type_id: leaveTypeId,
+          start_date: startDate,
+          end_date: endDate,
+          reason,
+          status: "pending",
+        },
+      ])
       .select()
-      .single();
+      .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) throw error
 
-    return NextResponse.json(data, { status: 200 });
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(data, { status: 201 })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 400 })
   }
 }
