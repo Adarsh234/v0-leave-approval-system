@@ -11,7 +11,7 @@ export async function POST(
 
     const requestId = params.id
 
-    // ✅ Manual auth: Get token from Authorization header
+    // Manual auth: Get token from Authorization header
     const authHeader = req.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -20,16 +20,17 @@ export async function POST(
     const authToken = authHeader.replace('Bearer ', '')
     headers.Authorization = `Bearer ${authToken}`
 
-    // ✅ Validate user via Supabase auth endpoint
+    // Validate user via Supabase auth endpoint
     const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, { headers })
-    if (!userRes.ok) {
+    const userData = await userRes.json()
+    if (!userRes.ok || !userData?.id) {
+      console.error('User validation failed:', userRes.status, userData)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userData = await userRes.json()
     const managerId = userData.id
 
-    // ✅ Update the leave request to "rejected" (manual Supabase REST call)
+    // Reject leave request
     const rejectRes = await fetch(
       `${supabaseUrl}/rest/v1/leave_requests?id=eq.${requestId}`,
       {
@@ -37,27 +38,30 @@ export async function POST(
         headers: {
           ...headers,
           'Content-Type': 'application/json',
-          Prefer: 'return=representation', // to get updated row
+          Prefer: 'return=representation',
         },
         body: JSON.stringify({ status: 'rejected' }),
       }
     )
 
+    const rejectData = await rejectRes.json()
     if (!rejectRes.ok) {
-      const errText = await rejectRes.text()
-      console.error('[v0] Failed to reject leave request:', errText)
+      console.error(
+        'Failed to reject leave request:',
+        rejectRes.status,
+        rejectData
+      )
       return NextResponse.json(
-        { error: 'Failed to reject request' },
+        { error: 'Failed to reject request', details: rejectData },
         { status: 500 }
       )
     }
 
-    const updatedRequest = await rejectRes.json()
-    return NextResponse.json({ success: true, data: updatedRequest })
+    return NextResponse.json({ success: true, data: rejectData })
   } catch (error) {
-    console.error('[v0] Internal server error:', error)
+    console.error('Internal server error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: String(error) },
       { status: 500 }
     )
   }
