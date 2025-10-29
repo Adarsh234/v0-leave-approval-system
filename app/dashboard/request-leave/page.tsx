@@ -1,20 +1,20 @@
-"use client"
+'use client'
 
-import type React from "react"
-import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import type React from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function RequestLeavePage() {
   const [formData, setFormData] = useState({
-    leaveType: "",
-    startDate: "",
-    endDate: "",
-    reason: "",
+    leaveType: '',
+    startDate: '',
+    endDate: '',
+    reason: '',
   })
   const [leaveTypes, setLeaveTypes] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -27,10 +27,10 @@ export default function RequestLeavePage() {
   useEffect(() => {
     const fetchLeaveTypes = async () => {
       try {
-        const { data } = await supabase.from("leave_types").select("*")
+        const { data } = await supabase.from('leave_types').select('*')
         setLeaveTypes(data || [])
       } catch (err) {
-        console.error("Error fetching leave types:", err)
+        console.error('Error fetching leave types:', err)
       }
     }
     fetchLeaveTypes()
@@ -43,33 +43,36 @@ export default function RequestLeavePage() {
 
     try {
       // Get current session
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error("You must be signed in to submit a leave request")
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (!session)
+        throw new Error('You must be signed in to submit a leave request')
 
-      const response = await fetch("/api/leave-requests", {
-        method: "POST",
+      const response = await fetch('/api/leave-requests', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`, // ✅ pass token
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`, // ✅ pass token
         },
-        credentials: "include", // ✅ important
+        credentials: 'include', // ✅ important
         body: JSON.stringify({
-          leaveTypeId: formData.leaveType,
-          startDate: formData.startDate,
-          endDate: formData.endDate,
+          leave_type_id: formData.leaveType,
+          start_date: formData.startDate,
+          end_date: formData.endDate,
           reason: formData.reason,
         }),
       })
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || "Failed to submit request")
+        throw new Error(error.error || 'Failed to submit request')
       }
 
       setSuccess(true)
-      setTimeout(() => router.push("/dashboard/my-requests"), 2000)
+      setTimeout(() => router.push('/dashboard/my-requests'), 2000)
     } catch (err: any) {
-      setError(err.message || "Failed to submit request")
+      setError(err.message || 'Failed to submit request')
     } finally {
       setLoading(false)
     }
@@ -115,7 +118,9 @@ export default function RequestLeavePage() {
               <select
                 id="leaveType"
                 value={formData.leaveType}
-                onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, leaveType: e.target.value })
+                }
                 required
                 className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
               >
@@ -131,14 +136,19 @@ export default function RequestLeavePage() {
             {/* Dates */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="startDate" className="text-slate-200 font-medium">
+                <Label
+                  htmlFor="startDate"
+                  className="text-slate-200 font-medium"
+                >
                   Start Date
                 </Label>
                 <Input
                   id="startDate"
                   type="date"
                   value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, startDate: e.target.value })
+                  }
                   required
                   className="bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
                 />
@@ -151,7 +161,9 @@ export default function RequestLeavePage() {
                   id="endDate"
                   type="date"
                   value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, endDate: e.target.value })
+                  }
                   required
                   className="bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
                 />
@@ -166,7 +178,9 @@ export default function RequestLeavePage() {
               <textarea
                 id="reason"
                 value={formData.reason}
-                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, reason: e.target.value })
+                }
                 required
                 rows={4}
                 className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
@@ -180,11 +194,11 @@ export default function RequestLeavePage() {
               disabled={loading}
               className={`w-full text-white font-semibold py-2 rounded-lg transition-all duration-200 ${
                 loading
-                  ? "bg-blue-800 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-blue-900/30"
+                  ? 'bg-blue-800 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-blue-900/30'
               }`}
             >
-              {loading ? "Submitting..." : "Submit Request"}
+              {loading ? 'Submitting...' : 'Submit Request'}
             </Button>
           </form>
         </CardContent>
