@@ -1,58 +1,49 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getSupabaseUrl, getSupabaseHeaders } from '@/lib/supabase/server'
-
-async function validateUser(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')
-  if (!authHeader?.startsWith('Bearer ')) return null
-
-  const token = authHeader.replace('Bearer ', '')
-  const res = await fetch(`${getSupabaseUrl()}/auth/v1/user`, {
-    headers: { ...getSupabaseHeaders(), Authorization: `Bearer ${token}` },
-  })
-
-  if (!res.ok) return null
-  return res.json()
-}
+// app/api/leave-requests/[id]/reject/route.ts
+import { NextResponse } from 'next/server'
+import { getSupabaseHeaders, getSupabaseUrl } from '@/lib/supabase/server'
 
 export async function POST(
-  req: NextRequest,
+  req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = await validateUser(req)
-    if (!user?.id)
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
     const leaveRequestId = params.id
 
-    const patchRes = await fetch(
+    // ✅ Manual auth: extract token
+    const authHeader = req.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Missing token' },
+        { status: 401 }
+      )
+    }
+    const token = authHeader.replace('Bearer ', '')
+
+    // ✅ Call Supabase REST API to update leave request
+    const response = await fetch(
       `${getSupabaseUrl()}/rest/v1/leave_requests?id=eq.${leaveRequestId}`,
       {
         method: 'PATCH',
-        headers: {
-          ...getSupabaseHeaders(),
-          Authorization: `Bearer ${user.access_token}`,
-          'Content-Type': 'application/json',
-          Prefer: 'return=representation',
-        },
+        headers: getSupabaseHeaders(token),
         body: JSON.stringify({ status: 'rejected' }),
       }
     )
 
-    const patchData = await patchRes.json()
-    if (!patchRes.ok) {
-      console.error('Supabase PATCH failed:', patchRes.status, patchData)
+    if (!response.ok) {
+      const err = await response.json()
+      console.error('[reject] Supabase error:', err)
       return NextResponse.json(
-        { error: 'Failed to reject request', details: patchData },
+        { error: 'Failed to reject request' },
         { status: 500 }
       )
     }
 
-    return NextResponse.json({ success: true, data: patchData })
-  } catch (error) {
-    console.error('Error rejecting leave request:', error)
+    const data = await response.json()
+    return NextResponse.json({ message: 'Leave request rejected', data })
+  } catch (err) {
+    console.error('[reject] Internal error:', err)
     return NextResponse.json(
-      { error: 'Internal server error', details: String(error) },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
