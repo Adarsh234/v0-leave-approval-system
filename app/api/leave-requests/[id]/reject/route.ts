@@ -9,18 +9,17 @@ export async function POST(
     const supabaseUrl = getSupabaseUrl()
     const headers = getSupabaseHeaders()
 
-    const requestId = params.id
+    const leaveRequestId = params.id
 
-    // Manual auth: Get token from Authorization header
+    // Get token from Authorization header
     const authHeader = req.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
     const authToken = authHeader.replace('Bearer ', '')
     headers.Authorization = `Bearer ${authToken}`
 
-    // Validate user via Supabase auth endpoint
+    // Check user
     const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, { headers })
     const userData = await userRes.json()
     if (!userRes.ok || !userData?.id) {
@@ -28,11 +27,9 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const managerId = userData.id
-
-    // Reject leave request
-    const rejectRes = await fetch(
-      `${supabaseUrl}/rest/v1/leave_requests?id=eq.${requestId}`,
+    // PATCH leave request
+    const patchRes = await fetch(
+      `${supabaseUrl}/rest/v1/leave_requests?id=eq.${leaveRequestId}`,
       {
         method: 'PATCH',
         headers: {
@@ -44,22 +41,18 @@ export async function POST(
       }
     )
 
-    const rejectData = await rejectRes.json()
-    if (!rejectRes.ok) {
-      console.error(
-        'Failed to reject leave request:',
-        rejectRes.status,
-        rejectData
-      )
+    const patchData = await patchRes.json()
+    if (!patchRes.ok) {
+      console.error('Supabase PATCH failed:', patchRes.status, patchData)
       return NextResponse.json(
-        { error: 'Failed to reject request', details: rejectData },
+        { error: 'Failed to reject request', details: patchData },
         { status: 500 }
       )
     }
 
-    return NextResponse.json({ success: true, data: rejectData })
+    return NextResponse.json({ success: true, data: patchData })
   } catch (error) {
-    console.error('Internal server error:', error)
+    console.error('Internal error rejecting leave request:', error)
     return NextResponse.json(
       { error: 'Internal server error', details: String(error) },
       { status: 500 }
