@@ -1,81 +1,89 @@
 // app/api/leave-requests/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabaseHeaders, getSupabaseUrl } from '@/lib/supabase/server'
+import { getSupabaseUrl, getSupabaseHeaders } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
     const supabaseUrl = getSupabaseUrl()
+    const headers = getSupabaseHeaders()
 
-    // 🧠 Extract auth header
+    // 1️⃣ Extract Authorization header
     const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const authToken = authHeader.substring(7)
+    headers.Authorization = `Bearer ${authToken}`
+
+    // 2️⃣ Get current user
+    const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, { headers })
+    if (!userRes.ok) {
+      const text = await userRes.text()
       return NextResponse.json(
-        { error: 'Unauthorized - Missing token' },
+        { error: 'Unauthorized', details: text },
         { status: 401 }
       )
     }
-
-    const authToken = authHeader.replace('Bearer ', '')
-    const headers = getSupabaseHeaders(authToken)
-
-    // 🧠 Get logged-in user
-    const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, { headers })
-    if (!userResponse.ok) {
-      const text = await userResponse.text()
-      console.error('[v0] Invalid auth token:', text)
-      return NextResponse.json(
-        { error: 'Unauthorized - Invalid token' },
-        { status: 401 }
-      )
-    }
-
-    const userData = await userResponse.json()
+    const userData = await userRes.json()
     const userId = userData.id
 
-    // 🧠 Parse request body
-    const body = await request.json()
-    const { leave_type_id, start_date, end_date, reason } = body
+    // 3️⃣ Parse incoming request body
+    const { leave_type_id, start_date, end_date, reason } = await request.json()
 
-    if (!leave_type_id || !start_date || !end_date) {
+    if (!leave_type_id || !start_date || !end_date || !reason) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    // 🧠 Create leave request
-    const leaveRequestResponse = await fetch(
-      `${supabaseUrl}/rest/v1/leave_requests`,
+    // 4️⃣ Get manager_id from user profile
+    const profileRes = await fetch(
+      `${supabaseUrl}/rest/v1/users?id=eq.${userId}&select=manager_id`,
       {
-        method: 'POST',
         headers,
-        body: JSON.stringify({
-          user_id: userId,
-          leave_type_id,
-          start_date,
-          end_date,
-          reason,
-          status: 'pending',
-          requested_at: new Date().toISOString(),
-        }),
       }
     )
-
-    if (!leaveRequestResponse.ok) {
-      const errorText = await leaveRequestResponse.text()
-      console.error('[v0] Leave insert error:', errorText)
+    if (!profileRes.ok) {
+      const text = await profileRes.text()
       return NextResponse.json(
-        { error: 'Failed to submit leave request' },
+        { error: 'Failed to fetch user profile', details: text },
+        { status: 500 }
+      )
+    }
+    const profiles = await profileRes.json()
+    const managerId = profiles[0]?.manager_id
+
+    // 5️⃣ Insert leave request
+    const insertRes = await fetch(`${supabaseUrl}/rest/v1/leave_requests`, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: userId,
+        manager_id: managerId || null,
+        leave_type_id,
+        start_date,
+        end_date,
+        reason,
+        status: 'pending',
+      }),
+    })
+
+    if (!insertRes.ok) {
+      const text = await insertRes.text()
+      return NextResponse.json(
+        { error: 'Failed to insert leave request', details: text },
         { status: 500 }
       )
     }
 
-    const responseData = await leaveRequestResponse.json()
-    return NextResponse.json({ success: true, data: responseData })
-  } catch (error) {
-    console.error('[v0] Error submitting leave request:', error)
+    const insertedData = await insertRes.json()
+
+    return NextResponse.json({ success: true, leaveRequest: insertedData })
+  } catch (err: any) {
+    console.error('Error in /api/leave-requests POST:', err)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: String(err) },
       { status: 500 }
     )
   }
