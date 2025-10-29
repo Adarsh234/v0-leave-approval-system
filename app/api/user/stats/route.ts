@@ -1,92 +1,82 @@
-import { NextResponse } from "next/server";
-import { createServerClientInstance } from "@/lib/supabase/server";
+// app/api/stats/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+import { getSupabaseHeaders, getSupabaseUrl } from '@/lib/supabase/server'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerClientInstance();
+    const supabaseUrl = getSupabaseUrl()
 
-    // ✅ Get the logged-in user from Supabase session (via cookies)
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
+    // 🧠 Extract Bearer token
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
-        { error: "Unauthorized - no active session" },
+        { error: 'Unauthorized - Missing token' },
         { status: 401 }
-      );
+      )
     }
 
-    const userId = user.id;
+    const authToken = authHeader.replace('Bearer ', '')
+    const headers = getSupabaseHeaders(authToken)
 
-    // ✅ Fetch the user's profile info
-    const { data: profiles, error: profileError } = await supabase
-      .from("users")
-      .select("role, full_name, department_id")
-      .eq("id", userId);
-
-    if (profileError) {
-      console.error("[v0] Profile fetch error:", profileError.message);
+    // 🧠 Verify user
+    const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, { headers })
+    if (!userResponse.ok) {
       return NextResponse.json(
-        { error: "Failed to fetch user profile" },
-        { status: 500 }
-      );
+        { error: 'Unauthorized - Invalid token' },
+        { status: 401 }
+      )
     }
 
-    const userProfile = profiles?.[0] || {};
+    const userData = await userResponse.json()
+    const userId = userData.id
 
-    // ✅ Fetch leave records
-    const { data: leaveRecords, error: leaveError } = await supabase
-      .from("leave_records")
-      .select("*")
-      .eq("user_id", userId);
+    // 🧠 Fetch profile
+    const profileResponse = await fetch(
+      `${supabaseUrl}/rest/v1/users?id=eq.${userId}&select=role,full_name,department_id`,
+      { headers }
+    )
+    const [userProfile] = await profileResponse.json()
 
-    if (leaveError) {
-      console.error("[v0] Leave records fetch error:", leaveError.message);
-      return NextResponse.json(
-        { error: "Failed to fetch leave records" },
-        { status: 500 }
-      );
-    }
+    // 🧠 Fetch leave records
+    const leaveRecordsResponse = await fetch(
+      `${supabaseUrl}/rest/v1/leave_records?user_id=eq.${userId}&select=*`,
+      { headers }
+    )
+    const leaveRecords = await leaveRecordsResponse.json()
 
-    // ✅ Fetch pending leave requests based on role
-    let pendingRequests = [];
-
-    if (userProfile.role === "manager") {
-      const { data, error } = await supabase
-        .from("leave_requests")
-        .select("*")
-        .eq("manager_id", userId)
-        .eq("status", "pending");
-      if (!error) pendingRequests = data || [];
-    } else if (userProfile.role === "coordinator") {
-      const { data, error } = await supabase
-        .from("leave_requests")
-        .select("*")
-        .eq("status", "pending");
-      if (!error) pendingRequests = data || [];
+    // 🧠 Fetch pending requests by role
+    let pendingRequests = []
+    if (userProfile?.role === 'manager') {
+      const res = await fetch(
+        `${supabaseUrl}/rest/v1/leave_requests?manager_id=eq.${userId}&status=eq.pending&select=*`,
+        { headers }
+      )
+      pendingRequests = await res.json()
+    } else if (userProfile?.role === 'coordinator') {
+      const res = await fetch(
+        `${supabaseUrl}/rest/v1/leave_requests?status=eq.pending&select=*`,
+        { headers }
+      )
+      pendingRequests = await res.json()
     } else {
-      const { data, error } = await supabase
-        .from("leave_requests")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("status", "pending");
-      if (!error) pendingRequests = data || [];
+      const res = await fetch(
+        `${supabaseUrl}/rest/v1/leave_requests?user_id=eq.${userId}&status=eq.pending&select=*`,
+        { headers }
+      )
+      pendingRequests = await res.json()
     }
 
-    // ✅ Return combined data
     return NextResponse.json({
       role: userProfile?.role,
       name: userProfile?.full_name,
       leaveBalance: leaveRecords || [],
       pendingRequests: pendingRequests || [],
-    });
-  } catch (error: any) {
-    console.error("[v0] Error fetching stats:", error);
+    })
+  } catch (error) {
+    console.error('[v0] Error fetching stats:', error)
     return NextResponse.json(
-      { error: "Failed to fetch stats", details: String(error) },
+      { error: 'Internal server error' },
       { status: 500 }
-    );
+    )
   }
 }
