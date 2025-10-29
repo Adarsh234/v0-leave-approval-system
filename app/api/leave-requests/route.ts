@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@/lib/supabase/server"  // use server client
-import { cookies } from "next/headers"
+import { createServerClientInstance } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
+  const supabase = createServerClientInstance()
 
   const {
     data: { user },
-    error: authError
+    error: authError,
   } = await supabase.auth.getUser()
 
   if (authError || !user) {
@@ -37,6 +35,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data, { status: 201 })
   } catch (err: any) {
+    console.error(err)
     return NextResponse.json({ error: err.message }, { status: 400 })
   }
 }
