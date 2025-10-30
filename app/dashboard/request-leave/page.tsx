@@ -1,13 +1,12 @@
 'use client'
 
-import type React from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 
 export default function RequestLeavePage() {
   const [formData, setFormData] = useState({
@@ -27,10 +26,12 @@ export default function RequestLeavePage() {
   useEffect(() => {
     const fetchLeaveTypes = async () => {
       try {
-        const { data } = await supabase.from('leave_types').select('*')
+        const { data, error } = await supabase.from('leave_types').select('*')
+        if (error) throw error
         setLeaveTypes(data || [])
       } catch (err) {
         console.error('Error fetching leave types:', err)
+        setError('Failed to load leave types.')
       }
     }
     fetchLeaveTypes()
@@ -40,22 +41,26 @@ export default function RequestLeavePage() {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    setSuccess(false)
 
     try {
       // Get current session
       const {
         data: { session },
+        error: sessionError,
       } = await supabase.auth.getSession()
+
+      if (sessionError) throw sessionError
       if (!session)
         throw new Error('You must be signed in to submit a leave request')
 
+      // Send request
       const response = await fetch('/api/leave-requests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`, // ✅ pass token
+          Authorization: `Bearer ${session.access_token}`,
         },
-        credentials: 'include', // ✅ important
         body: JSON.stringify({
           leave_type_id: formData.leaveType,
           start_date: formData.startDate,
@@ -64,14 +69,23 @@ export default function RequestLeavePage() {
         }),
       })
 
+      let resultText = await response.text() // get text first
+      let result
+      try {
+        result = JSON.parse(resultText) // parse if possible
+      } catch {
+        result = { error: resultText }
+      }
+
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to submit request')
+        throw new Error(result?.error || `Server error: ${response.statusText}`)
       }
 
       setSuccess(true)
+      console.log('Leave request created:', result)
       setTimeout(() => router.push('/dashboard/my-requests'), 2000)
     } catch (err: any) {
+      console.error('Leave request error:', err)
       setError(err.message || 'Failed to submit request')
     } finally {
       setLoading(false)
@@ -80,7 +94,7 @@ export default function RequestLeavePage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4">
-      {/* Page Header */}
+      {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-extrabold text-white mb-2 tracking-tight">
           Request Leave
@@ -90,8 +104,8 @@ export default function RequestLeavePage() {
         </p>
       </div>
 
-      {/* Leave Request Form */}
-      <Card className="bg-slate-800/70 border border-slate-700 shadow-2xl backdrop-blur-lg transition-all duration-300 hover:shadow-blue-900/20">
+      {/* Form */}
+      <Card className="bg-slate-800/70 border border-slate-700 shadow-2xl backdrop-blur-lg">
         <CardHeader>
           <CardTitle className="text-xl text-white font-semibold flex items-center gap-2">
             📝 Leave Request Form
@@ -99,7 +113,7 @@ export default function RequestLeavePage() {
         </CardHeader>
         <CardContent>
           {success && (
-            <div className="mb-4 p-4 bg-green-900/70 border border-green-700 rounded-lg text-green-200 text-sm animate-pulse">
+            <div className="mb-4 p-4 bg-green-900/70 border border-green-700 rounded-lg text-green-200 text-sm">
               ✅ Leave request submitted successfully! Redirecting...
             </div>
           )}
@@ -122,7 +136,7 @@ export default function RequestLeavePage() {
                   setFormData({ ...formData, leaveType: e.target.value })
                 }
                 required
-                className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
+                className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2"
               >
                 <option value="">Select leave type</option>
                 {leaveTypes.map((type) => (
@@ -150,7 +164,7 @@ export default function RequestLeavePage() {
                     setFormData({ ...formData, startDate: e.target.value })
                   }
                   required
-                  className="bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
+                  className="bg-slate-700 border border-slate-600 text-white rounded-lg"
                 />
               </div>
               <div className="grid gap-2">
@@ -165,7 +179,7 @@ export default function RequestLeavePage() {
                     setFormData({ ...formData, endDate: e.target.value })
                   }
                   required
-                  className="bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
+                  className="bg-slate-700 border border-slate-600 text-white rounded-lg"
                 />
               </div>
             </div>
@@ -183,7 +197,7 @@ export default function RequestLeavePage() {
                 }
                 required
                 rows={4}
-                className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
+                className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 resize-none"
                 placeholder="Provide a reason for your leave request..."
               />
             </div>
@@ -195,7 +209,7 @@ export default function RequestLeavePage() {
               className={`w-full text-white font-semibold py-2 rounded-lg transition-all duration-200 ${
                 loading
                   ? 'bg-blue-800 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-blue-900/30'
+                  : 'bg-blue-600 hover:bg-blue-700 shadow-md'
               }`}
             >
               {loading ? 'Submitting...' : 'Submit Request'}

@@ -1,4 +1,3 @@
-// app/api/leave-requests/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseUrl, getSupabaseHeaders } from '@/lib/supabase/server'
 
@@ -15,7 +14,7 @@ export async function POST(request: NextRequest) {
     const authToken = authHeader.substring(7)
     headers.Authorization = `Bearer ${authToken}`
 
-    // 2️⃣ Get current user
+    // 2️⃣ Get current user from Supabase Auth
     const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, { headers })
     if (!userRes.ok) {
       const text = await userRes.text()
@@ -27,8 +26,9 @@ export async function POST(request: NextRequest) {
     const userData = await userRes.json()
     const userId = userData.id
 
-    // 3️⃣ Parse incoming request body
-    const { leave_type_id, start_date, end_date, reason } = await request.json()
+    // 3️⃣ Parse request body
+    const body = await request.json()
+    const { leave_type_id, start_date, end_date, reason } = body
 
     if (!leave_type_id || !start_date || !end_date || !reason) {
       return NextResponse.json(
@@ -40,9 +40,7 @@ export async function POST(request: NextRequest) {
     // 4️⃣ Get manager_id from user profile
     const profileRes = await fetch(
       `${supabaseUrl}/rest/v1/users?id=eq.${userId}&select=manager_id`,
-      {
-        headers,
-      }
+      { headers }
     )
     if (!profileRes.ok) {
       const text = await profileRes.text()
@@ -51,16 +49,23 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
-    const profiles = await profileRes.json()
-    const managerId = profiles[0]?.manager_id
 
-    // 5️⃣ Insert leave request
+    const profiles = await profileRes.json()
+    const managerId = profiles[0]?.manager_id ?? null
+
+    // 5️⃣ Insert leave request (✅ Fixed headers)
+    const insertHeaders = {
+      ...headers,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation', // ✅ ensures response has JSON
+    }
+
     const insertRes = await fetch(`${supabaseUrl}/rest/v1/leave_requests`, {
       method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
+      headers: insertHeaders,
       body: JSON.stringify({
         user_id: userId,
-        manager_id: managerId || null,
+        manager_id: managerId,
         leave_type_id,
         start_date,
         end_date,
@@ -79,11 +84,16 @@ export async function POST(request: NextRequest) {
 
     const insertedData = await insertRes.json()
 
-    return NextResponse.json({ success: true, leaveRequest: insertedData })
+    // ✅ Success
+    return NextResponse.json({
+      success: true,
+      message: 'Leave request submitted successfully',
+      leaveRequest: insertedData,
+    })
   } catch (err: any) {
     console.error('Error in /api/leave-requests POST:', err)
     return NextResponse.json(
-      { error: 'Internal server error', details: String(err) },
+      { error: 'Internal server error', details: err.message || String(err) },
       { status: 500 }
     )
   }
