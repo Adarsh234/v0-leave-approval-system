@@ -1,4 +1,3 @@
-// app/api/leave-requests/[id]/reject/route.ts
 import { NextResponse } from 'next/server'
 import { getSupabaseHeaders, getSupabaseUrl } from '@/lib/supabase/server'
 
@@ -9,7 +8,7 @@ export async function POST(
   try {
     const leaveRequestId = params.id
 
-    // ✅ Manual auth: extract token
+    // ✅ Manual auth: extract Bearer token
     const authHeader = req.headers.get('authorization')
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -19,21 +18,38 @@ export async function POST(
     }
     const token = authHeader.replace('Bearer ', '')
 
-    // ✅ Call Supabase REST API to update leave request
+    // ✅ Optional comment (from manager)
+    let comment: string | null = null
+    try {
+      const body = await req.json()
+      comment = body?.comment || null
+    } catch {
+      // no body — ignore
+    }
+
+    // ✅ Prepare the update payload
+    const updateData = {
+      status: 'rejected',
+      manager_comment: comment || 'Rejected by manager',
+      manager_reviewed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
+    // ✅ Send PATCH request to Supabase REST API
     const response = await fetch(
       `${getSupabaseUrl()}/rest/v1/leave_requests?id=eq.${leaveRequestId}`,
       {
         method: 'PATCH',
         headers: getSupabaseHeaders(token),
-        body: JSON.stringify({ status: 'rejected' }),
+        body: JSON.stringify(updateData),
       }
     )
 
     if (!response.ok) {
-      const err = await response.json()
+      const err = await response.text()
       console.error('[reject] Supabase error:', err)
       return NextResponse.json(
-        { error: 'Failed to reject request' },
+        { error: 'Failed to reject request', details: err },
         { status: 500 }
       )
     }
@@ -43,7 +59,7 @@ export async function POST(
   } catch (err) {
     console.error('[reject] Internal error:', err)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: String(err) },
       { status: 500 }
     )
   }

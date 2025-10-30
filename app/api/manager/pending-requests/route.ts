@@ -5,79 +5,90 @@ export async function GET(request: NextRequest) {
   try {
     const supabaseUrl = getSupabaseUrl()
 
-    // 🧠 Extract Bearer token
+    // ✅ 1. Extract Bearer token (manual auth)
     const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json(
         { error: 'Unauthorized - Missing token' },
         { status: 401 }
       )
     }
 
-    const authToken = authHeader.replace('Bearer ', '')
-    const headers = getSupabaseHeaders(authToken)
+    const token = authHeader.replace('Bearer ', '')
+    const headers = getSupabaseHeaders(token)
 
-    // 🧠 Get user info
-    const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, { headers })
-    if (!userResponse.ok) {
+    // ✅ 2. Verify current manager user
+    const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, { headers })
+    if (!userRes.ok) {
+      const errText = await userRes.text()
+      console.error('[pending-requests] Invalid token:', errText)
       return NextResponse.json(
-        { error: 'Unauthorized - Invalid token' },
+        { error: 'Unauthorized - Invalid token', details: errText },
         { status: 401 }
       )
     }
 
-    const userData = await userResponse.json()
+    const userData = await userRes.json()
     const managerId = userData.id
 
-    console.log('[v0] Fetching pending requests for manager:', managerId)
-
-    // 🧠 Fetch pending requests assigned to this manager
-    const requestsResponse = await fetch(
+    // ✅ 3. Fetch pending leave requests for this manager
+    const requestsRes = await fetch(
       `${supabaseUrl}/rest/v1/leave_requests?manager_id=eq.${managerId}&status=eq.pending&order=requested_at.desc`,
       { headers }
     )
 
-    if (!requestsResponse.ok) {
-      console.error('[v0] Failed to fetch requests:', requestsResponse.status)
+    if (!requestsRes.ok) {
+      const errText = await requestsRes.text()
+      console.error('[pending-requests] Failed to fetch requests:', errText)
       return NextResponse.json(
-        { error: 'Failed to fetch requests' },
+        { error: 'Failed to fetch requests', details: errText },
         { status: 500 }
       )
     }
 
-    const requests = await requestsResponse.json()
-    console.log('[v0] Found pending requests:', requests.length)
+    const requests = await requestsRes.json()
+    console.log(
+      `[pending-requests] Found ${requests.length} pending requests for manager ${managerId}`
+    )
 
-    // 🧠 Fetch related data for each request
+    // ✅ 4. Enrich each request with user and leave type info
     const enrichedRequests = await Promise.all(
       requests.map(async (req: any) => {
-        // Fetch user details
-        const userRes = await fetch(
-          `${supabaseUrl}/rest/v1/users?id=eq.${req.user_id}&select=full_name,email`,
-          { headers }
-        )
-        const [user] = await userRes.json()
+        try {
+          const [userRes, leaveTypeRes] = await Promise.all([
+            fetch(
+              `${supabaseUrl}/rest/v1/users?id=eq.${req.user_id}&select=full_name,email`,
+              { headers }
+            ),
+            fetch(
+              `${supabaseUrl}/rest/v1/leave_types?id=eq.${req.leave_type_id}&select=name`,
+              { headers }
+            ),
+          ])
 
-        // Fetch leave type
-        const leaveRes = await fetch(
-          `${supabaseUrl}/rest/v1/leave_types?id=eq.${req.leave_type_id}&select=name`,
-          { headers }
-        )
-        const [leaveType] = await leaveRes.json()
+          const [user] = userRes.ok ? await userRes.json() : [null]
+          const [leaveType] = leaveTypeRes.ok
+            ? await leaveTypeRes.json()
+            : [null]
 
-        return {
-          ...req,
-          users: user || null,
-          leave_types: leaveType || null,
+          return {
+            ...req,
+            users: user || null,
+            leave_types: leaveType || null,
+          }
+        } catch (nestedErr) {
+          console.error('[pending-requests] Nested fetch error:', nestedErr)
+          return req
         }
       })
     )
 
+    // ✅ 5. Send response
     return NextResponse.json(enrichedRequests)
   } catch (error) {
-    console.error('[v0] Error fetching pending requests:', error)
+    console.error('[pending-requests] Internal error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: String(error) },
       { status: 500 }
     )
   }
