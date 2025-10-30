@@ -17,6 +17,9 @@ export async function POST(
       )
     }
     const token = authHeader.replace('Bearer ', '')
+    console.log('[reject] Requesting rejection for ID:', leaveRequestId)
+    console.log('[reject] Token starts with:', token.slice(0, 10))
+    console.log('[reject] Supabase URL:', getSupabaseUrl())
 
     // ✅ Optional comment (from manager)
     let comment: string | null = null
