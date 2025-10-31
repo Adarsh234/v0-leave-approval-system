@@ -3,10 +3,9 @@ import { getSupabaseUrl, getSupabaseHeaders } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
-    // 1️⃣ Extract ID from URL
     const url = new URL(request.url)
     const parts = url.pathname.split('/')
-    const leaveRequestId = parts.at(-2) // second last segment before "reject"
+    const leaveRequestId = parts.at(-2)
 
     if (!leaveRequestId || leaveRequestId === 'undefined') {
       console.error('❌ Missing or invalid leaveRequestId:', leaveRequestId)
@@ -19,70 +18,82 @@ export async function POST(request: NextRequest) {
     const supabaseUrl = getSupabaseUrl()
     const headers = getSupabaseHeaders()
 
-    // 2️⃣ Extract Authorization header
+    // 🔐 Get token
     const authHeader = request.headers.get('authorization')
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json(
-        { error: 'Unauthorized - missing Bearer token' },
+        { error: 'Unauthorized - Missing token' },
         { status: 401 }
       )
     }
     const authToken = authHeader.substring(7)
     headers.Authorization = `Bearer ${authToken}`
 
-    // 3️⃣ Verify current user
+    // 🧠 Get user info (for manager id)
     const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, { headers })
     if (!userRes.ok) {
       const text = await userRes.text()
       return NextResponse.json(
-        { error: 'Unauthorized', details: text },
+        { error: 'Unauthorized - Invalid token', details: text },
         { status: 401 }
       )
     }
     const userData = await userRes.json()
-    const userId = userData.id
+    const managerId = userData.id
 
-    // 4️⃣ Update record
-    const updateHeaders = {
-      ...headers,
-      'Content-Type': 'application/json',
-      Prefer: 'return=representation',
+    // 💬 Get optional comment
+    let comment: string | null = null
+    try {
+      const body = await request.json()
+      comment = body?.comment || null
+    } catch {
+      // ignore empty body
     }
 
-    const updateRes = await fetch(
+    // 🧾 Prepare update data
+    const updateData = {
+      status: 'rejected',
+      manager_comment: comment || 'Rejected by manager',
+      manager_id: managerId,
+      manager_reviewed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
+    // 🔄 Update record
+    const response = await fetch(
       `${supabaseUrl}/rest/v1/leave_requests?id=eq.${leaveRequestId}`,
       {
         method: 'PATCH',
-        headers: updateHeaders,
-        body: JSON.stringify({
-          status: 'rejected',
-          rejected_by: userId,
-          updated_at: new Date().toISOString(),
-        }),
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+          Prefer: 'return=representation',
+        },
+        body: JSON.stringify(updateData),
       }
     )
 
-    if (!updateRes.ok) {
-      const text = await updateRes.text()
-      console.error('❌ Supabase reject update failed:', text)
+    if (!response.ok) {
+      const err = await response.text()
+      console.error('❌ Supabase reject update failed:', err)
       return NextResponse.json(
-        { error: 'Failed to update leave request', details: text },
+        { error: 'Failed to reject request', details: err },
         { status: 500 }
       )
     }
 
-    const updatedData = await updateRes.json()
-    console.log('✅ Rejected leave request:', updatedData)
+    const data = await response.json()
+    console.log('✅ Leave request rejected successfully:', data)
 
     return NextResponse.json({
       success: true,
       message: 'Leave request rejected successfully',
-      data: updatedData,
+      data,
     })
   } catch (err: any) {
-    console.error('💥 Error in reject route:', err)
+    console.error('💥 [reject] Internal error:', err)
     return NextResponse.json(
-      { error: 'Internal server error', details: err.message },
+      { error: 'Internal server error', details: err.message || String(err) },
       { status: 500 }
     )
   }
