@@ -6,10 +6,12 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const leaveRequestId = params.id // ✅ Extract ID properly
-    if (!leaveRequestId) {
+    // 1️⃣ Ensure ID is received
+    const leaveRequestId = params?.id
+    if (!leaveRequestId || leaveRequestId === 'undefined') {
+      console.error('❌ Missing or invalid leaveRequestId:', leaveRequestId)
       return NextResponse.json(
-        { error: 'Missing leave request ID' },
+        { error: 'Missing or invalid leave request ID', id: leaveRequestId },
         { status: 400 }
       )
     }
@@ -17,15 +19,18 @@ export async function POST(
     const supabaseUrl = getSupabaseUrl()
     const headers = getSupabaseHeaders()
 
-    // ✅ Extract and verify auth token
+    // 2️⃣ Extract Authorization header
     const authHeader = request.headers.get('authorization')
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Unauthorized - missing Bearer token' },
+        { status: 401 }
+      )
     }
     const authToken = authHeader.substring(7)
     headers.Authorization = `Bearer ${authToken}`
 
-    // ✅ Get current user info
+    // 3️⃣ Verify current user
     const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, { headers })
     if (!userRes.ok) {
       const text = await userRes.text()
@@ -37,7 +42,7 @@ export async function POST(
     const userData = await userRes.json()
     const userId = userData.id
 
-    // ✅ Update leave request status
+    // 4️⃣ Update status to rejected
     const updateHeaders = {
       ...headers,
       'Content-Type': 'application/json',
@@ -58,6 +63,7 @@ export async function POST(
 
     if (!updateRes.ok) {
       const text = await updateRes.text()
+      console.error('❌ Supabase reject update failed:', text)
       return NextResponse.json(
         { error: 'Failed to update leave request', details: text },
         { status: 500 }
@@ -65,13 +71,15 @@ export async function POST(
     }
 
     const updatedData = await updateRes.json()
+    console.log('✅ Rejected leave request:', updatedData)
+
     return NextResponse.json({
       success: true,
-      message: 'Leave request approved',
+      message: 'Leave request rejected successfully',
       data: updatedData,
     })
   } catch (err: any) {
-    console.error('Error approving request:', err)
+    console.error('💥 Error in reject route:', err)
     return NextResponse.json(
       { error: 'Internal server error', details: err.message },
       { status: 500 }
