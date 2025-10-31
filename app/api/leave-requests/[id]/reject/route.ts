@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseUrl, getSupabaseHeaders } from '@/lib/supabase/server'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest) {
   try {
-    // 1️⃣ Ensure ID is received
-    const leaveRequestId = params?.id
+    // 1️⃣ Extract ID from URL
+    const url = new URL(request.url)
+    const parts = url.pathname.split('/')
+    const leaveRequestId = parts.at(-2) // second last segment before "reject"
+
     if (!leaveRequestId || leaveRequestId === 'undefined') {
       console.error('❌ Missing or invalid leaveRequestId:', leaveRequestId)
       return NextResponse.json(
@@ -42,7 +42,7 @@ export async function POST(
     const userData = await userRes.json()
     const userId = userData.id
 
-    // 4️⃣ Update status to rejected
+    // 4️⃣ Update record
     const updateHeaders = {
       ...headers,
       'Content-Type': 'application/json',
@@ -57,6 +57,7 @@ export async function POST(
         body: JSON.stringify({
           status: 'rejected',
           rejected_by: userId,
+          updated_at: new Date().toISOString(),
         }),
       }
     )
