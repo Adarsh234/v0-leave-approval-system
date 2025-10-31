@@ -1,68 +1,79 @@
-import { NextResponse } from 'next/server'
-import { getSupabaseHeaders, getSupabaseUrl } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getSupabaseUrl, getSupabaseHeaders } from '@/lib/supabase/server'
 
 export async function POST(
-  req: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const leaveRequestId = params.id
-
-    // ✅ Manual auth: extract Bearer token
-    const authHeader = req.headers.get('authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
+    const leaveRequestId = params.id // ✅ Extract ID properly
+    if (!leaveRequestId) {
       return NextResponse.json(
-        { error: 'Unauthorized - Missing token' },
+        { error: 'Missing leave request ID' },
+        { status: 400 }
+      )
+    }
+
+    const supabaseUrl = getSupabaseUrl()
+    const headers = getSupabaseHeaders()
+
+    // ✅ Extract and verify auth token
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const authToken = authHeader.substring(7)
+    headers.Authorization = `Bearer ${authToken}`
+
+    // ✅ Get current user info
+    const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, { headers })
+    if (!userRes.ok) {
+      const text = await userRes.text()
+      return NextResponse.json(
+        { error: 'Unauthorized', details: text },
         { status: 401 }
       )
     }
-    const token = authHeader.replace('Bearer ', '')
-    console.log('[reject] Requesting rejection for ID:', leaveRequestId)
-    console.log('[reject] Token starts with:', token.slice(0, 10))
-    console.log('[reject] Supabase URL:', getSupabaseUrl())
+    const userData = await userRes.json()
+    const userId = userData.id
 
-    // ✅ Optional comment (from manager)
-    let comment: string | null = null
-    try {
-      const body = await req.json()
-      comment = body?.comment || null
-    } catch {
-      // no body — ignore
+    // ✅ Update leave request status
+    const updateHeaders = {
+      ...headers,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
     }
 
-    // ✅ Prepare the update payload
-    const updateData = {
-      status: 'rejected',
-      manager_comment: comment || 'Rejected by manager',
-      manager_reviewed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }
-
-    // ✅ Send PATCH request to Supabase REST API
-    const response = await fetch(
-      `${getSupabaseUrl()}/rest/v1/leave_requests?id=eq.${leaveRequestId}`,
+    const updateRes = await fetch(
+      `${supabaseUrl}/rest/v1/leave_requests?id=eq.${leaveRequestId}`,
       {
         method: 'PATCH',
-        headers: getSupabaseHeaders(token),
-        body: JSON.stringify(updateData),
+        headers: updateHeaders,
+        body: JSON.stringify({
+          status: 'rejected',
+          rejected_by: userId,
+        }),
       }
     )
 
-    if (!response.ok) {
-      const err = await response.text()
-      console.error('[reject] Supabase error:', err)
+    if (!updateRes.ok) {
+      const text = await updateRes.text()
       return NextResponse.json(
-        { error: 'Failed to reject request', details: err },
+        { error: 'Failed to update leave request', details: text },
         { status: 500 }
       )
     }
 
-    const data = await response.json()
-    return NextResponse.json({ message: 'Leave request rejected', data })
-  } catch (err) {
-    console.error('[reject] Internal error:', err)
+    const updatedData = await updateRes.json()
+    return NextResponse.json({
+      success: true,
+      message: 'Leave request approved',
+      data: updatedData,
+    })
+  } catch (err: any) {
+    console.error('Error approving request:', err)
     return NextResponse.json(
-      { error: 'Internal server error', details: String(err) },
+      { error: 'Internal server error', details: err.message },
       { status: 500 }
     )
   }
