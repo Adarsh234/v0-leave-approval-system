@@ -4,22 +4,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useState, useEffect } from 'react'
 
-type LeaveRecord = {
-  id: string
-  user_id: string
-  leave_type_id: string
-  total_days: number
-  used_days: number
-  available_days: number
-  academic_year: string
-  leave_types: {
-    name: string
-    description: string
-  }
-}
-
 export default function LeaveBalancePage() {
-  const [records, setRecords] = useState<LeaveRecord[]>([])
+  const [records, setRecords] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
@@ -31,18 +17,15 @@ export default function LeaveBalancePage() {
         } = await supabase.auth.getUser()
         if (!user) return
 
-        // ✅ Only fetch from leave_records
-        // used_days and available_days are automatically updated by your trigger
-        const { data: leaveRecords, error } = await supabase
+        const { data } = await supabase
           .from('leave_records')
           .select(`*, leave_types(name, description)`)
           .eq('user_id', user.id)
           .order('academic_year', { ascending: false })
 
-        if (error) throw error
-        setRecords(leaveRecords || [])
-      } catch (err) {
-        console.error('Error fetching leave balance:', err)
+        setRecords(data || [])
+      } catch (error) {
+        console.error('Error fetching leave balance:', error)
       } finally {
         setLoading(false)
       }
@@ -60,14 +43,11 @@ export default function LeaveBalancePage() {
   }
 
   // Group records by academic year
-  const recordsByYear = records.reduce<Record<string, LeaveRecord[]>>(
-    (acc, record) => {
-      if (!acc[record.academic_year]) acc[record.academic_year] = []
-      acc[record.academic_year].push(record)
-      return acc
-    },
-    {}
-  )
+  const recordsByYear = records.reduce((acc: any, record) => {
+    if (!acc[record.academic_year]) acc[record.academic_year] = []
+    acc[record.academic_year].push(record)
+    return acc
+  }, {})
 
   return (
     <div className="max-w-5xl mx-auto px-4">
@@ -94,7 +74,7 @@ export default function LeaveBalancePage() {
               Working Year: {year}
             </h2>
             <div className="space-y-5">
-              {recordsByYear[year].map((record) => {
+              {recordsByYear[year].map((record: any) => {
                 const usedPercentage = Math.min(
                   (record.used_days / record.total_days) * 100,
                   100
@@ -133,13 +113,13 @@ export default function LeaveBalancePage() {
                         <div>
                           <p className="text-slate-400 text-sm">Used Days</p>
                           <p className="text-yellow-400 font-bold text-2xl">
-                            {record.used_days ?? 0}
+                            {record.used_days}
                           </p>
                         </div>
                         <div>
                           <p className="text-slate-400 text-sm">Available</p>
                           <p className="text-green-400 font-bold text-2xl">
-                            {record.available_days ?? record.total_days}
+                            {record.total_days - record.used_days}
                           </p>
                         </div>
                       </div>
