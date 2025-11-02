@@ -1,71 +1,38 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-
-// ✅ Manual Supabase connection
-const supabaseUrl = 'https://YOUR_SUPABASE_URL.supabase.co'
-const supabaseKey = 'YOUR_PUBLIC_ANON_KEY'
-const supabase = createClient(supabaseUrl, supabaseKey)
+import { useState, useEffect } from 'react'
 
 export default function LeaveBalancePage() {
   const [records, setRecords] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const supabase = createClient()
 
   useEffect(() => {
     const fetchLeaveBalance = async () => {
       try {
-        // ✅ Get current user
         const {
           data: { user },
-          error: userError,
         } = await supabase.auth.getUser()
-        if (userError || !user) return
+        if (!user) return
 
-        // ✅ Fetch leave records for the logged-in user
-        const { data: leaveRecords, error: leaveError } = await supabase
+        const { data } = await supabase
           .from('leave_records')
           .select(`*, leave_types(name, description)`)
           .eq('user_id', user.id)
           .order('academic_year', { ascending: false })
 
-        if (leaveError) throw leaveError
-
-        // ✅ Fetch approved leave requests for the same user
-        const { data: approvedRequests, error: requestError } = await supabase
-          .from('leave_requests')
-          .select('leave_type_id, start_date, end_date, status')
-          .eq('user_id', user.id)
-          .eq('status', 'approved')
-
-        if (requestError) throw requestError
-
-        // ✅ Calculate used days dynamically (no trigger)
-        const recordsWithUsed = (leaveRecords || []).map((record) => {
-          const usedDays = (approvedRequests || [])
-            .filter((req) => req.leave_type_id === record.leave_type_id)
-            .reduce((sum, req) => {
-              const start = new Date(req.start_date)
-              const end = new Date(req.end_date)
-              const diff =
-                (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24) + 1
-              return sum + diff
-            }, 0)
-
-          return { ...record, used_days: usedDays }
-        })
-
-        setRecords(recordsWithUsed)
+        setRecords(data || [])
       } catch (error) {
-        console.error('❌ Error fetching leave balance:', error)
+        console.error('Error fetching leave balance:', error)
       } finally {
         setLoading(false)
       }
     }
 
     fetchLeaveBalance()
-  }, [])
+  }, [supabase])
 
   if (loading) {
     return (
@@ -75,7 +42,7 @@ export default function LeaveBalancePage() {
     )
   }
 
-  // ✅ Group records by academic year
+  // Group records by academic year
   const recordsByYear = records.reduce((acc: any, record) => {
     if (!acc[record.academic_year]) acc[record.academic_year] = []
     acc[record.academic_year].push(record)
