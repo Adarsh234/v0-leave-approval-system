@@ -2,6 +2,12 @@
 
 # 🌐 Leave Approval System
 
+![GitHub language count](https://img.shields.io/github/languages/count/Adarsh234/CodeCracker)
+![GitHub top language](https://img.shields.io/github/languages/top/Adarsh234/CodeCracker)
+![Vercel Deploy](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)
+![GitHub last commit](https://img.shields.io/github/last-commit/Adarsh234/CodeCracker)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 A **comprehensive full-stack platform** for managing leave requests, approvals, and records across your organization — complete with **department-based access**, **email notifications**, and **dashboard analytics**.
 
 ---
