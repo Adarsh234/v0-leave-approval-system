@@ -2,12 +2,12 @@
 
 # 🌐 Leave Approval System
 
-![GitHub language count](https://img.shields.io/github/languages/count/Adarsh234/CodeCracker)
-![GitHub top language](https://img.shields.io/github/languages/top/Adarsh234/CodeCracker)
+![GitHub language count](https://img.shields.io/github/languages/count/Adarsh234/v0-leave-approval-system)
+![GitHub top language](https://img.shields.io/github/languages/top/Adarsh234/v0-leave-approval-system)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat&logo=typescript) 
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=flat&logo=tailwind-css)
 ![Vercel Deploy](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)
-![GitHub last commit](https://img.shields.io/github/last-commit/Adarsh234/CodeCracker)
+![GitHub last commit](https://img.shields.io/github/last-commit/Adarsh234/v0-leave-approval-system)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 A **comprehensive full-stack platform** for managing leave requests, approvals, and records across your organization — complete with **department-based access**, **email notifications**, and **dashboard analytics**.
